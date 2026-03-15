@@ -5,6 +5,7 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  SafeAreaView,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -15,73 +16,57 @@ interface FeatureCardProps {
   icon: keyof typeof Ionicons.glyphMap;
   title: string;
   subtitle: string;
-  gradient: readonly [string, string, ...string[]];
+  iconBgColor: string;
+  iconColor: string;
   onPress: () => void;
 }
 
-const FeatureCard = ({ icon, title, subtitle, gradient, onPress }: FeatureCardProps) => (
+const FeatureCard = ({ icon, title, subtitle, iconBgColor, iconColor, onPress }: FeatureCardProps) => (
   <TouchableOpacity onPress={onPress} activeOpacity={0.8} style={styles.featureCard}>
     <View style={[styles.featureCardInner, Shadows.card]}>
-      <LinearGradient
-        colors={gradient}
-        style={styles.featureIconBg}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-      >
-        <Ionicons name={icon} size={24} color="#fff" />
-      </LinearGradient>
-      <Text style={styles.featureTitle}>{title}</Text>
-      <Text style={styles.featureSubtitle}>{subtitle}</Text>
+      <View style={[styles.featureIconBg, { backgroundColor: iconBgColor }]}>
+        <Ionicons name={icon} size={22} color={iconColor} />
+      </View>
+      <View style={styles.featureTextWrapper}>
+        <Text style={styles.featureTitle}>{title}</Text>
+        <Text style={styles.featureSubtitle}>{subtitle}</Text>
+      </View>
     </View>
   </TouchableOpacity>
 );
 
 const HomeScreen = ({ navigation }: any) => {
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        {/* Header */}
-        <View style={styles.header}>
-          <View>
-            <Text style={styles.greeting}>Hello, Khai 👋</Text>
-            <Text style={styles.subtitle}>Ready to design your next system?</Text>
-          </View>
-          <TouchableOpacity style={styles.avatarContainer}>
-            <LinearGradient
-              colors={Colors.gradientBlue}
-              style={styles.avatar}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-            >
-              <Text style={styles.avatarText}>K</Text>
-            </LinearGradient>
-          </TouchableOpacity>
-        </View>
-
-        {/* Quick Action - New Calculation */}
+        {/* Quick Action - New Calculation (Hero Banner at top) */}
         <TouchableOpacity
           onPress={() => navigation.navigate('Calculate')}
           activeOpacity={0.85}
           style={styles.heroCardWrapper}
         >
           <LinearGradient
-            colors={Colors.gradientBlue}
+            colors={Colors.gradientHero}
             style={[styles.heroCard, Shadows.glow(Colors.primary)]}
             start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
+            end={{ x: 1, y: 1 }}
           >
             <View style={styles.heroContent}>
               <View style={styles.heroTextArea}>
                 <Text style={styles.heroTitle}>New Calculation</Text>
-                <Text style={styles.heroSubtitle}>Start designing your conveyor drive system</Text>
+                <Text style={styles.heroSubtitle}>Start designing your industrial drive system</Text>
+                
+                <View style={styles.heroAction}>
+                  <Text style={styles.heroActionText}>Get Started</Text>
+                  <Ionicons name="arrow-forward" size={14} color={Colors.primary} />
+                </View>
               </View>
-              <View style={styles.heroIcon}>
-                <Ionicons name="add-circle" size={48} color="rgba(255,255,255,0.3)" />
+
+              <View style={styles.heroIconWrapper}>
+                <View style={styles.heroIconBg}>
+                  <Ionicons name="calculator" size={28} color="#fff" />
+                </View>
               </View>
-            </View>
-            <View style={styles.heroAction}>
-              <Text style={styles.heroActionText}>Get Started</Text>
-              <Ionicons name="arrow-forward" size={16} color="#fff" />
             </View>
           </LinearGradient>
         </TouchableOpacity>
@@ -92,96 +77,71 @@ const HomeScreen = ({ navigation }: any) => {
           <FeatureCard
             icon="calculator"
             title="Calculations"
-            subtitle="Motor, Gear, Chain"
-            gradient={Colors.gradientCyan}
+            subtitle="Motor, Gear, Shaft"
+            iconBgColor={Colors.gradientCyan[0] + '20'} // Light transparent background
+            iconColor={Colors.gradientCyan[0]}
             onPress={() => navigation.navigate('Calculate')}
           />
           <FeatureCard
             icon="time"
             title="History"
             subtitle="Past results"
-            gradient={Colors.gradientPurple}
+            iconBgColor={Colors.gradientPurple[0] + '20'}
+            iconColor={Colors.gradientPurple[0]}
             onPress={() => navigation.navigate('History')}
           />
           <FeatureCard
-            icon="hardware-chip"
+            icon="cube"
             title="Components"
-            subtitle="Motor & Chain DB"
-            gradient={Colors.gradientSuccess}
+            subtitle="Motor & Chain [3]"
+            iconBgColor={Colors.success + '20'}
+            iconColor={Colors.success}
             onPress={() => {}}
           />
           <FeatureCard
             icon="bulb"
             title="Expert System"
-            subtitle="AI suggestions"
-            gradient={Colors.gradientWarning}
+            subtitle="AI Suggestions"
+            iconBgColor={Colors.warning + '20'}
+            iconColor={Colors.warning}
             onPress={() => {}}
           />
         </View>
 
         {/* Quick Stats */}
         <Text style={styles.sectionTitle}>Quick Stats</Text>
-        <GlassCard>
+        <View style={[styles.statsContainer, Shadows.card]}>
           <View style={styles.statsRow}>
             <View style={styles.statItem}>
               <Text style={styles.statValue}>12</Text>
-              <Text style={styles.statLabel}>Total Calculations</Text>
+              <Text style={styles.statLabel}>TOTAL CALCULATIONS</Text>
             </View>
             <View style={styles.statDivider} />
             <View style={styles.statItem}>
               <Text style={styles.statValue}>Nov 5</Text>
-              <Text style={styles.statLabel}>Last Calculation</Text>
+              <Text style={styles.statLabel}>LAST CALCULATION</Text>
             </View>
             <View style={styles.statDivider} />
             <View style={styles.statItem}>
               <Text style={styles.statValue}>3</Text>
-              <Text style={styles.statLabel}>Saved Designs</Text>
+              <Text style={styles.statLabel}>SAVED PROJECTS</Text>
             </View>
           </View>
-        </GlassCard>
+        </View>
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  safeArea: {
     flex: 1,
     backgroundColor: Colors.background,
   },
   scrollContent: {
     paddingHorizontal: Spacing.lg,
-    paddingTop: 60,
+    paddingTop: Spacing.xl, // Removed avatar/header, banner is first
     paddingBottom: 100,
-  },
-
-  // Header
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: Spacing.xl,
-  },
-  greeting: {
-    ...Typography.h1,
-    marginBottom: Spacing.xs,
-  },
-  subtitle: {
-    ...Typography.bodySmall,
-    color: Colors.textMuted,
-  },
-  avatarContainer: {},
-  avatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  avatarText: {
-    color: '#fff',
-    fontSize: 20,
-    fontWeight: '700',
   },
 
   // Hero Card
@@ -195,45 +155,58 @@ const styles = StyleSheet.create({
   heroContent: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    alignItems: 'center',
   },
   heroTextArea: {
     flex: 1,
   },
   heroTitle: {
     fontSize: 22,
-    fontWeight: '700',
+    fontWeight: '800',
     color: '#fff',
     marginBottom: Spacing.xs,
   },
   heroSubtitle: {
     fontSize: 14,
-    color: 'rgba(255,255,255,0.7)',
+    color: 'rgba(255,255,255,0.85)',
+    marginBottom: Spacing.lg,
     lineHeight: 20,
-  },
-  heroIcon: {
-    marginLeft: Spacing.md,
+    paddingRight: Spacing.xl,
   },
   heroAction: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: Spacing.md,
-    paddingTop: Spacing.md,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: '#fff',
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    borderRadius: BorderRadius.full,
+    alignSelf: 'flex-start',
   },
   heroActionText: {
-    color: '#fff',
-    fontWeight: '600',
-    fontSize: 14,
+    color: Colors.primary,
+    fontWeight: '700',
+    fontSize: 13,
     marginRight: Spacing.xs,
+  },
+  heroIconWrapper: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: Spacing.sm,
+  },
+  heroIconBg: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 
   // Section Title
   sectionTitle: {
     ...Typography.h3,
     marginBottom: Spacing.md,
-    color: Colors.textSecondary,
+    color: Colors.textPrimary,
   },
 
   // Feature Grid
@@ -249,31 +222,41 @@ const styles = StyleSheet.create({
   },
   featureCardInner: {
     backgroundColor: Colors.surface,
-    borderRadius: BorderRadius.lg,
-    padding: Spacing.base,
-    borderWidth: 1,
-    borderColor: Colors.border,
+    borderRadius: BorderRadius.md,
+    padding: Spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    minHeight: 80,
+  },
+  featureTextWrapper: {
+    flex: 1,
   },
   featureIconBg: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
+    width: 40,
+    height: 40,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: Spacing.md,
+    marginRight: Spacing.md,
   },
   featureTitle: {
-    ...Typography.body,
-    fontWeight: '600',
+    color: Colors.textPrimary,
+    fontSize: 14,
+    fontWeight: '700',
     marginBottom: 2,
   },
   featureSubtitle: {
-    ...Typography.bodySmall,
     color: Colors.textMuted,
-    fontSize: 12,
+    fontSize: 11,
   },
 
   // Stats
+  statsContainer: {
+    backgroundColor: Colors.surface,
+    borderRadius: BorderRadius.md,
+    paddingVertical: Spacing.lg,
+    marginBottom: Spacing.xl,
+  },
   statsRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -281,20 +264,24 @@ const styles = StyleSheet.create({
   statItem: {
     flex: 1,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   statValue: {
-    ...Typography.value,
-    color: Colors.primary,
+    fontSize: 24,
+    fontWeight: '800',
+    color: Colors.primaryDark,
     marginBottom: Spacing.xs,
   },
   statLabel: {
-    ...Typography.caption,
-    fontSize: 10,
+    color: Colors.textMuted,
+    fontSize: 9,
+    fontWeight: '700',
     textAlign: 'center',
+    letterSpacing: 0.5,
   },
   statDivider: {
     width: 1,
-    height: 36,
+    height: 48,
     backgroundColor: Colors.border,
   },
 });

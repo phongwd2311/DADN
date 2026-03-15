@@ -4,36 +4,37 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
+  SafeAreaView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Typography, Spacing, BorderRadius, Shadows } from '../utils/theme';
 import CustomInput from '../components/CustomInput';
 import GradientButton from '../components/GradientButton';
-import GlassCard from '../components/GlassCard';
-
-type Strategy = 'cost' | 'durability';
 
 const InputScreen = ({ navigation }: any) => {
   const [force, setForce] = useState('');
   const [velocity, setVelocity] = useState('');
   const [diameter, setDiameter] = useState('');
-  const [strategy, setStrategy] = useState<Strategy>('cost');
+  const [life, setLife] = useState('');
+  const [t1, setT1] = useState('');
+  const [T1, setTr1] = useState('');
+  const [t2, setT2] = useState('');
+  const [T2, setTr2] = useState('');
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<{ force?: string; velocity?: string; diameter?: string }>({});
 
   const validate = () => {
     const newErrors: { force?: string; velocity?: string; diameter?: string } = {};
-    if (!force.trim()) newErrors.force = 'Force is required';
-    else if (isNaN(Number(force)) || Number(force) <= 0) newErrors.force = 'Must be a positive number';
+    if (!force.trim()) newErrors.force = 'Yêu cầu nhập lực';
+    else if (isNaN(Number(force)) || Number(force) <= 0) newErrors.force = 'Số dương';
 
-    if (!velocity.trim()) newErrors.velocity = 'Velocity is required';
-    else if (isNaN(Number(velocity)) || Number(velocity) <= 0) newErrors.velocity = 'Must be a positive number';
+    if (!velocity.trim()) newErrors.velocity = 'Yêu cầu nhập vận tốc';
+    else if (isNaN(Number(velocity)) || Number(velocity) <= 0) newErrors.velocity = 'Số dương';
 
-    if (!diameter.trim()) newErrors.diameter = 'Diameter is required';
-    else if (isNaN(Number(diameter)) || Number(diameter) <= 0) newErrors.diameter = 'Must be a positive number';
+    if (!diameter.trim()) newErrors.diameter = 'Yêu cầu nhập đường kính';
+    else if (isNaN(Number(diameter)) || Number(diameter) <= 0) newErrors.diameter = 'Số dương';
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -51,243 +52,219 @@ const InputScreen = ({ navigation }: any) => {
           v: Number(velocity),
           D: Number(diameter),
         },
-        strategy,
+        strategy: 'cost',
       });
     }, 1200);
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
+    <SafeAreaView style={styles.safeArea}>
+      <KeyboardAvoidingView
+        style={styles.keyboardView}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        {/* Header */}
+        {/* Simple Header */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-            <Ionicons name="arrow-back" size={22} color={Colors.textPrimary} />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Input Parameters</Text>
-          <View style={{ width: 40 }} />
+          <Text style={styles.headerTitle}>Thông số đầu vào</Text>
+          <Text style={styles.headerSubtitle}>
+            Nhập thông số kỹ thuật băng tải để tìm kiếm thiết bị phù hợp
+          </Text>
         </View>
 
-        {/* Info Banner */}
-        <GlassCard accentColor={Colors.info} style={styles.infoBanner}>
-          <View style={styles.infoRow}>
-            <Ionicons name="information-circle" size={18} color={Colors.info} />
-            <Text style={styles.infoText}>
-              Enter conveyor belt parameters to calculate the drive system design.
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          {/* Main Form Card */}
+          <View style={[styles.card, Shadows.card]}>
+            <CustomInput
+              label="Lực kéo băng tải F (N)"
+              value={force}
+              onChangeText={setForce}
+              placeholder="e.g. 2500"
+              keyboardType="numeric"
+              error={errors.force}
+              style={{ paddingBottom: Spacing.sm }}
+            />
+
+            <CustomInput
+              label="Tốc độ băng tải v (m/s)"
+              value={velocity}
+              onChangeText={setVelocity}
+              placeholder="e.g. 1.2"
+              keyboardType="numeric"
+              error={errors.velocity}
+              style={{ paddingBottom: Spacing.sm }}
+            />
+
+            <CustomInput
+              label="Đường kính tang quay D (mm)"
+              value={diameter}
+              onChangeText={setDiameter}
+              placeholder="e.g. 320"
+              keyboardType="numeric"
+              error={errors.diameter}
+              style={{ paddingBottom: Spacing.sm }}
+            />
+
+            <CustomInput
+              label="Tuổi thọ/Thời gian phục vụ L (giờ)"
+              value={life}
+              onChangeText={setLife}
+              placeholder="e.g. 20000"
+              keyboardType="numeric"
+              style={{ paddingBottom: Spacing.sm }}
+            />
+
+            {/* Load change over time (t1, T1 / t2, T2) */}
+            <Text style={styles.sectionTitle}>
+              Chế độ tải thay đổi theo thời gian
             </Text>
+
+            <View style={styles.row}>
+              <View style={styles.col}>
+                <CustomInput
+                  label="t₁ (%)"
+                  value={t1}
+                  onChangeText={setT1}
+                  placeholder="e.g. 10"
+                  keyboardType="numeric"
+                />
+              </View>
+              <View style={styles.spacer} />
+              <View style={styles.col}>
+                <CustomInput
+                  label="T₁ (Nm)"
+                  value={T1}
+                  onChangeText={setTr1}
+                  placeholder="e.g. 800"
+                  keyboardType="numeric"
+                />
+              </View>
+            </View>
+
+            <View style={styles.row}>
+              <View style={styles.col}>
+                <CustomInput
+                  label="t₂ (%)"
+                  value={t2}
+                  onChangeText={setT2}
+                  placeholder="e.g. 5"
+                  keyboardType="numeric"
+                />
+              </View>
+              <View style={styles.spacer} />
+              <View style={styles.col}>
+                <CustomInput
+                  label="T₂ (Nm)"
+                  value={T2}
+                  onChangeText={setTr2}
+                  placeholder="e.g. 1200"
+                  keyboardType="numeric"
+                />
+              </View>
+            </View>
+
+            {/* Calculate Button */}
+            <GradientButton
+              title="TÌM KIẾM THIẾT BỊ"
+              onPress={handleCalculate}
+              loading={loading}
+              gradient={Colors.gradientBlue}
+              style={{ marginTop: Spacing.lg }}
+              icon={<Ionicons name="search" size={20} color="#fff" />}
+            />
           </View>
-        </GlassCard>
-
-        {/* Conveyor Parameters Section */}
-        <Text style={styles.sectionTitle}>
-          <Ionicons name="settings" size={16} color={Colors.textSecondary} />{' '}
-          Conveyor Parameters
-        </Text>
-
-        <CustomInput
-          label="Lực vòng F"
-          value={force}
-          onChangeText={setForce}
-          placeholder="e.g. 2500"
-          unit="N"
-          keyboardType="numeric"
-          error={errors.force}
-          icon={<Ionicons name="flash" size={16} color={Colors.textMuted} />}
-        />
-
-        <CustomInput
-          label="Vận tốc v"
-          value={velocity}
-          onChangeText={setVelocity}
-          placeholder="e.g. 1.2"
-          unit="m/s"
-          keyboardType="numeric"
-          error={errors.velocity}
-          icon={<Ionicons name="speedometer" size={16} color={Colors.textMuted} />}
-        />
-
-        <CustomInput
-          label="Đường kính tang D"
-          value={diameter}
-          onChangeText={setDiameter}
-          placeholder="e.g. 320"
-          unit="mm"
-          keyboardType="numeric"
-          error={errors.diameter}
-          icon={<Ionicons name="ellipse-outline" size={16} color={Colors.textMuted} />}
-        />
-
-        {/* Optimization Strategy Section */}
-        <Text style={[styles.sectionTitle, { marginTop: Spacing.lg }]}>
-          <Ionicons name="bulb" size={16} color={Colors.textSecondary} />{' '}
-          Optimization Strategy
-        </Text>
-
-        <View style={styles.strategyRow}>
-          <TouchableOpacity
-            style={[
-              styles.strategyCard,
-              strategy === 'cost' && styles.strategyCardActive,
-            ]}
-            onPress={() => setStrategy('cost')}
-            activeOpacity={0.7}
-          >
-            <View style={[styles.strategyIcon, { backgroundColor: Colors.success + '20' }]}>
-              <Ionicons name="wallet" size={22} color={Colors.success} />
-            </View>
-            <Text style={[styles.strategyLabel, strategy === 'cost' && styles.strategyLabelActive]}>
-              Cost
-            </Text>
-            <Text style={styles.strategyDesc}>Optimize for cost</Text>
-            {strategy === 'cost' && (
-              <View style={styles.checkBadge}>
-                <Ionicons name="checkmark-circle" size={20} color={Colors.success} />
-              </View>
-            )}
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[
-              styles.strategyCard,
-              strategy === 'durability' && styles.strategyCardActive,
-            ]}
-            onPress={() => setStrategy('durability')}
-            activeOpacity={0.7}
-          >
-            <View style={[styles.strategyIcon, { backgroundColor: Colors.accent + '20' }]}>
-              <Ionicons name="shield-checkmark" size={22} color={Colors.accent} />
-            </View>
-            <Text style={[styles.strategyLabel, strategy === 'durability' && styles.strategyLabelActive]}>
-              Durability
-            </Text>
-            <Text style={styles.strategyDesc}>Optimize for life</Text>
-            {strategy === 'durability' && (
-              <View style={styles.checkBadge}>
-                <Ionicons name="checkmark-circle" size={20} color={Colors.accent} />
-              </View>
-            )}
-          </TouchableOpacity>
+        </ScrollView>
+        
+        {/* Info Banner at bottom */}
+        <View style={styles.bottomBanner}>
+          <Text style={styles.bannerText}>
+            <Text style={{ fontWeight: '700' }}>Lưu ý: </Text>
+            Hệ thống sẽ tự động tính toán và gợi ý các thiết bị phù hợp nhất dựa trên thông số băng tải bạn nhập.
+          </Text>
         </View>
-
-        {/* Calculate Button */}
-        <GradientButton
-          title="Calculate"
-          onPress={handleCalculate}
-          loading={loading}
-          style={{ marginTop: Spacing.xxl }}
-          icon={<Ionicons name="calculator" size={20} color="#fff" />}
-        />
-      </ScrollView>
-    </KeyboardAvoidingView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  safeArea: {
     flex: 1,
     backgroundColor: Colors.background,
   },
-  scrollContent: {
-    paddingHorizontal: Spacing.lg,
-    paddingTop: 60,
-    paddingBottom: Spacing.xxxl,
+  keyboardView: {
+    flex: 1,
   },
-
-  // Header
   header: {
-    flexDirection: 'row',
+    paddingTop: Spacing.xl,
+    paddingHorizontal: Spacing.xl,
+    paddingBottom: Spacing.lg,
     alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: Spacing.xl,
-  },
-  backBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    backgroundColor: Colors.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: Colors.border,
   },
   headerTitle: {
     ...Typography.h2,
+    color: '#1E293B',
+    marginBottom: Spacing.xs,
+    fontWeight: '800',
+  },
+  headerSubtitle: {
+    ...Typography.bodySmall,
+    color: Colors.textSecondary,
+    textAlign: 'center',
+  },
+  scrollContent: {
+    paddingHorizontal: Spacing.xl,
+    paddingBottom: Spacing.xxxl,
+    alignItems: 'center',
   },
 
-  // Info Banner
-  infoBanner: {
+  // Card
+  card: {
+    width: '100%',
+    maxWidth: 500,
+    backgroundColor: Colors.surface,
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.xl,
     marginBottom: Spacing.xl,
-    padding: Spacing.md,
-  },
-  infoRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-  },
-  infoText: {
-    ...Typography.bodySmall,
-    marginLeft: Spacing.sm,
-    flex: 1,
-    lineHeight: 18,
   },
 
   // Section
   sectionTitle: {
-    ...Typography.caption,
-    fontSize: 12,
+    ...Typography.label,
+    fontSize: 15,
+    marginTop: Spacing.md,
     marginBottom: Spacing.md,
-    color: Colors.textSecondary,
+    color: Colors.textPrimary,
   },
 
-  // Strategy
-  strategyRow: {
+  // 2 Col layout
+  row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
-  strategyCard: {
-    width: '48%',
-    backgroundColor: Colors.surface,
-    borderRadius: BorderRadius.lg,
-    padding: Spacing.base,
-    borderWidth: 1.5,
-    borderColor: Colors.border,
-    position: 'relative',
+  col: {
+    flex: 1,
   },
-  strategyCardActive: {
-    borderColor: Colors.primary,
-    backgroundColor: Colors.primary + '08',
+  spacer: {
+    width: Spacing.md,
   },
-  strategyIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: Spacing.md,
+
+  // Bottom Banner
+  bottomBanner: {
+    backgroundColor: '#EBF5FF', // very light blue from figma
+    paddingVertical: Spacing.lg,
+    paddingHorizontal: Spacing.xl,
+    borderTopWidth: 1,
+    borderTopColor: '#D1E8FF',
   },
-  strategyLabel: {
-    ...Typography.body,
-    fontWeight: '600',
-    marginBottom: 2,
-  },
-  strategyLabelActive: {
-    color: Colors.primary,
-  },
-  strategyDesc: {
-    ...Typography.bodySmall,
-    color: Colors.textMuted,
-    fontSize: 12,
-  },
-  checkBadge: {
-    position: 'absolute',
-    top: Spacing.sm,
-    right: Spacing.sm,
+  bannerText: {
+    color: Colors.primaryDark,
+    fontSize: 13,
+    textAlign: 'center',
+    lineHeight: 20,
   },
 });
 
