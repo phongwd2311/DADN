@@ -13,18 +13,103 @@ import GlassCard from '../components/GlassCard';
 import ResultCard from '../components/ResultCard';
 import GradientButton from '../components/GradientButton';
 
+import { CalculationResult } from '../types/result';
+import DataTable from '../components/DataTable';
+
 const ResultScreen = ({ route, navigation }: any) => {
   // Get params or use defaults
-  const input = route?.params?.input ?? { F: 2500, v: 1.2, D: 320 };
+  const input = route?.params?.input ?? { F: 2500, v: 1.25, D: 320 };
   const strategy = route?.params?.strategy ?? 'cost';
+  const result: CalculationResult = route?.params?.resultData;
 
-  // Mock calculation results
-  const results = {
-    motorPower: 3.0,
-    transmissionRatio: 18.5,
-    chainParams: { z1: 21, z2: 63, pitch: 19.05 },
-    recommendedMotor: { id: 'M02', power: 3.0, speed: 1450, type: 'K' },
-  };
+  if (!result) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <Text>No results available. Please go back and calculate again.</Text>
+        <GradientButton title="Go Back" onPress={() => navigation.goBack()} />
+      </View>
+    );
+  }
+
+  // Formatting helper
+  const f = (num: number, digits = 2) => Number(num.toFixed(digits));
+
+  // Table 1: Chọn động cơ điện
+  const motorTableData = [
+    { param: 'Plv (kW)', val: f(result.Plv) },
+    { param: 'Ptd (kW)', val: f(result.Ptd) },
+    { param: 'Hiệu suất η', val: f(result.eta, 4) },
+    { param: 'Pct (kW)', val: f(result.Pct) },
+    { param: 'nlv (v/p)', val: f(result.nlv) },
+    { param: 'nsb (v/p)', val: f(result.nsb) },
+    { param: 'Động cơ chọn', val: result.motor.id },
+  ];
+
+  // Table 2: Phân phối tỷ số truyền
+  const ratioTableData = [
+    { param: 'Hệ dẫn động (ut)', val: f(result.shaftTable.truc3.u * result.shaftTable.truc1.u * result.shaftTable.truc2.u) }, // Approximate ut
+    { param: 'Hộp giảm tốc (uh)', val: f(result.shaftTable.truc1.u * result.shaftTable.truc2.u) },
+    { param: 'Cấp nhanh (u1)', val: f(result.shaftTable.truc1.u) },
+    { param: 'Cấp chậm (u2)', val: f(result.shaftTable.truc2.u) },
+    { param: 'Xích (ux)', val: f(result.shaftTable.truc3.u) },
+  ];
+
+  // Table 3: Bảng 1.2. Số liệu động học và động lực học (Shaft Table)
+  const shaftTableData = [
+    { name: 'Động cơ', P: f(result.shaftTable.dc.P), u: f(result.shaftTable.dc.u), n: f(result.shaftTable.dc.n), T: f(result.shaftTable.dc.T) },
+    { name: 'Trục I', P: f(result.shaftTable.truc1.P), u: f(result.shaftTable.truc1.u), n: f(result.shaftTable.truc1.n), T: f(result.shaftTable.truc1.T) },
+    { name: 'Trục II', P: f(result.shaftTable.truc2.P), u: f(result.shaftTable.truc2.u), n: f(result.shaftTable.truc2.n), T: f(result.shaftTable.truc2.T) },
+    { name: 'Trục III', P: f(result.shaftTable.truc3.P), u: f(result.shaftTable.truc3.u), n: f(result.shaftTable.truc3.n), T: f(result.shaftTable.truc3.T) },
+    { name: 'Trục CT', P: f(result.shaftTable.ct.P), u: '-', n: f(result.shaftTable.ct.n), T: f(result.shaftTable.ct.T) },
+  ];
+
+  const shaftColumns = [
+    { key: 'name', title: 'Thông số', width: 80, align: 'left' as const },
+    { key: 'P', title: 'P (kW)', align: 'center' as const },
+    { key: 'u', title: 'u', align: 'center' as const },
+    { key: 'n', title: 'n (v/p)', align: 'center' as const },
+    { key: 'T', title: 'T (N.mm)', align: 'right' as const },
+  ];
+
+  // Table 4: Xác định thông số xích
+  const chainDesignTableData = [
+    { param: 'Số răng đĩa dẫn (z1)', val: result.chainParams.z1 },
+    { param: 'Số răng đĩa bị dẫn (z2)', val: result.chainParams.z2 },
+    { param: 'Bước xích p (mm)', val: f(result.chainParams.p) },
+    { param: 'Khoảng cách trục a (mm)', val: f(result.chainParams.a) },
+    { param: 'Số mắt xích (xc)', val: result.chainParams.xc },
+  ];
+
+  // Table 5: Kích thước đĩa xích
+  const sproketTableData = [
+    { param: 'ĐK chia dẫn d1 (mm)', val: f(result.chainParams.d1) },
+    { param: 'ĐK chia bị dẫn d2 (mm)', val: f(result.chainParams.d2) },
+    { param: 'ĐK đỉnh đĩa dẫn da1 (mm)', val: f(result.chainParams.da1) },
+    { param: 'ĐK đỉnh đĩa bị dẫn da2 (mm)', val: f(result.chainParams.da2) },
+    { param: 'ĐK chân đĩa dẫn df1 (mm)', val: f(result.chainParams.df1) },
+    { param: 'ĐK chân đĩa bị dẫn df2 (mm)', val: f(result.chainParams.df2) },
+  ];
+
+  // Table 6: Bảng 3.2. Thông số bộ truyền xích
+  const finalChainTableData = [
+    { param: 'Số răng dẫn (z1)', val: result.chainParams.z1, param2: 'a (mm)', val2: f(result.chainParams.a) },
+    { param: 'Số răng bị dẫn (z2)', val: result.chainParams.z2, param2: 'd1 (mm)', val2: f(result.chainParams.d1) },
+    { param: 'Bước p (mm)', val: f(result.chainParams.p), param2: 'd2 (mm)', val2: f(result.chainParams.d2) },
+    { param: 'Chiều dài ống lót B', val: f(result.chainParams.B), param2: 'Lực Fr (N)', val2: f(result.chainParams.Fr) },
+    { param: 'Đường kính chốt dc', val: f(result.chainParams.dc), param2: 'Số mắt xc', val2: result.chainParams.xc },
+  ];
+
+  const basicColumns = [
+    { key: 'param', title: 'Đại lượng', align: 'left' as const },
+    { key: 'val', title: 'Giá trị', align: 'right' as const },
+  ];
+
+  const twinColumns = [
+    { key: 'param', title: 'Đại lượng', align: 'left' as const },
+    { key: 'val', title: 'Giá trị', align: 'right' as const },
+    { key: 'param2', title: 'Đại lượng', align: 'left' as const },
+    { key: 'val2', title: 'Giá trị', align: 'right' as const },
+  ];
 
   return (
     <View style={styles.container}>
@@ -47,69 +132,53 @@ const ResultScreen = ({ route, navigation }: any) => {
           end={{ x: 1, y: 0 }}
           style={[styles.heroCard, Shadows.glow(Colors.primary)]}
         >
-          <Text style={styles.heroLabel}>MOTOR POWER</Text>
+          <Text style={styles.heroLabel}>CÔNG SUẤT CẦN THIẾT</Text>
           <View style={styles.heroValueRow}>
-            <Text style={styles.heroValue}>{results.motorPower}</Text>
+            <Text style={styles.heroValue}>{f(result.Pct)}</Text>
             <Text style={styles.heroUnit}>kW</Text>
           </View>
           <View style={styles.heroMeta}>
             <View style={styles.heroMetaItem}>
               <Ionicons name="flash" size={14} color="rgba(255,255,255,0.7)" />
-              <Text style={styles.heroMetaText}>F = {input.F} N</Text>
+              <Text style={styles.heroMetaText}>Plv = {f(result.Plv)} kW</Text>
             </View>
             <View style={styles.heroMetaItem}>
               <Ionicons name="speedometer" size={14} color="rgba(255,255,255,0.7)" />
-              <Text style={styles.heroMetaText}>v = {input.v} m/s</Text>
+              <Text style={styles.heroMetaText}>η = {f(result.eta, 3)}</Text>
             </View>
             <View style={styles.heroMetaItem}>
               <Ionicons name="ellipse-outline" size={14} color="rgba(255,255,255,0.7)" />
-              <Text style={styles.heroMetaText}>D = {input.D} mm</Text>
+              <Text style={styles.heroMetaText}>nsb = {f(result.nsb)} v/p</Text>
             </View>
           </View>
         </LinearGradient>
 
-        {/* Detailed Results Grid */}
-        <Text style={styles.sectionTitle}>Detailed Results</Text>
-        <View style={styles.resultGrid}>
-          <View style={styles.resultGridItem}>
-            <ResultCard
-              label="Tỷ số truyền"
-              value={results.transmissionRatio}
-              icon={<Ionicons name="git-branch" size={18} color={Colors.accent} />}
-              accentColor={Colors.accent}
-            />
-          </View>
-          <View style={styles.resultGridItem}>
-            <ResultCard
-              label="Chain Z1"
-              value={results.chainParams.z1}
-              unit="teeth"
-              icon={<Ionicons name="link" size={18} color={Colors.success} />}
-              accentColor={Colors.success}
-            />
-          </View>
-          <View style={styles.resultGridItem}>
-            <ResultCard
-              label="Chain Z2"
-              value={results.chainParams.z2}
-              unit="teeth"
-              icon={<Ionicons name="link" size={18} color={Colors.warning} />}
-              accentColor={Colors.warning}
-            />
-          </View>
-          <View style={styles.resultGridItem}>
-            <ResultCard
-              label="Pitch"
-              value={results.chainParams.pitch}
-              unit="mm"
-              icon={<Ionicons name="resize" size={18} color={Colors.primary} />}
-              accentColor={Colors.primary}
-            />
-          </View>
-        </View>
+        <DataTable title="1. Bảng Chọn động cơ điện" columns={basicColumns} data={motorTableData} />
+        <DataTable title="2. Bảng Phân phối tỷ số truyền" columns={basicColumns} data={ratioTableData} />
+        <DataTable title="3. Bảng 1.2. Số liệu động học" columns={shaftColumns} data={shaftTableData} />
+        <DataTable title="4. Bảng Xác định thông số xích" columns={basicColumns} data={chainDesignTableData} />
+        <DataTable title="5. Bảng Tính kích thước đĩa xích" columns={basicColumns} data={sproketTableData} />
+        <DataTable title="6. Bảng 3.2. Thông số bộ truyền xích" columns={twinColumns} data={finalChainTableData} />
 
-        {/* Recommended Component */}
-        <Text style={styles.sectionTitle}>Recommended Component</Text>
+        {/* Chain Strength Validation */}
+        <Text style={styles.sectionTitle}>Cơ tính và Kiểm nghiệm bền xích</Text>
+        <GlassCard accentColor={result.chainStrength.passed ? Colors.success : Colors.error} style={{ marginBottom: Spacing.xl }}>
+           <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: Spacing.sm }}>
+              <Text style={styles.strategyText}>Hệ số an toàn (s): {f(result.chainStrength.s)}</Text>
+              <Text style={[styles.strategyText, { color: result.chainStrength.passed ? Colors.success : Colors.error }]}>
+                (Yêu cầu: ≥ {f(result.chainStrength.s_min)})
+              </Text>
+           </View>
+           <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+              <Text style={styles.strategyText}>Ứng suất tiếp xúc (σH1): {f(result.chainStrength.sigmaH1)} MPa</Text>
+              <Text style={[styles.strategyText, { color: result.chainStrength.contactPassed ? Colors.success : Colors.error }]}>
+                (Yêu cầu: ≤ {f(result.chainStrength.sigmaH_allow)})
+              </Text>
+           </View>
+        </GlassCard>
+
+        {/* Standard Motor Selected */}
+        <Text style={styles.sectionTitle}>Động cơ tiêu chuẩn được chọn</Text>
         <GlassCard accentColor={Colors.success}>
           <View style={styles.componentRow}>
             <LinearGradient
@@ -121,11 +190,11 @@ const ResultScreen = ({ route, navigation }: any) => {
               <Ionicons name="hardware-chip" size={22} color="#fff" />
             </LinearGradient>
             <View style={styles.componentInfo}>
-              <Text style={styles.componentName}>Motor {results.recommendedMotor.id}</Text>
+              <Text style={styles.componentName}>Motor {result.motor.id}</Text>
               <Text style={styles.componentSpec}>
-                {results.recommendedMotor.power} kW @ {results.recommendedMotor.speed} rpm
+                {result.motor.power} kW @ {result.motor.speed} rpm
               </Text>
-              <Text style={styles.componentType}>Type: {results.recommendedMotor.type}</Text>
+              <Text style={styles.componentType}>Type: {result.motor.type}</Text>
             </View>
             <View style={styles.matchBadge}>
               <Text style={styles.matchText}>Best Match</Text>

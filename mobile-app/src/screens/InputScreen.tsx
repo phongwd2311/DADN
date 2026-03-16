@@ -26,35 +26,65 @@ const InputScreen = ({ navigation }: any) => {
   const [errors, setErrors] = useState<{ force?: string; velocity?: string; diameter?: string }>({});
 
   const validate = () => {
-    const newErrors: { force?: string; velocity?: string; diameter?: string } = {};
+    const newErrors: Record<string, string> = {};
+    const fVal = Number(force);
+    const vVal = Number(velocity);
+    const dVal = Number(diameter);
+    const lVal = Number(life);
+    const t1Val = Number(t1);
+    const t2Val = Number(t2);
+
     if (!force.trim()) newErrors.force = 'Yêu cầu nhập lực';
-    else if (isNaN(Number(force)) || Number(force) <= 0) newErrors.force = 'Số dương';
+    else if (isNaN(fVal) || fVal <= 0 || fVal > 50000) newErrors.force = '0 < F ≤ 50,000 N';
 
     if (!velocity.trim()) newErrors.velocity = 'Yêu cầu nhập vận tốc';
-    else if (isNaN(Number(velocity)) || Number(velocity) <= 0) newErrors.velocity = 'Số dương';
+    else if (isNaN(vVal) || vVal <= 0 || vVal > 5) newErrors.velocity = '0 < v ≤ 5 m/s';
 
     if (!diameter.trim()) newErrors.diameter = 'Yêu cầu nhập đường kính';
-    else if (isNaN(Number(diameter)) || Number(diameter) <= 0) newErrors.diameter = 'Số dương';
+    else if (isNaN(dVal) || dVal <= 0 || dVal > 1000) newErrors.diameter = '0 < D ≤ 1000 mm';
+
+    if (life.trim() && (isNaN(lVal) || lVal <= 0 || lVal > 100000)) newErrors.life = '0 < L ≤ 100,000';
+    if (t1.trim() && (isNaN(t1Val) || t1Val < 0 || t1Val > 100)) newErrors.t1 = '0-100%';
+    if (t2.trim() && (isNaN(t2Val) || t2Val < 0 || t2Val > 100)) newErrors.t2 = '0-100%';
+    
+    if (t1.trim() && t2.trim() && (t1Val + t2Val > 100)) {
+       newErrors.t1 = 'Tổng % > 100';
+       newErrors.t2 = 'Tổng % > 100';
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleCalculate = () => {
+  const handleCalculate = async () => {
     if (!validate()) return;
     setLoading(true);
-    // Simulate calculation
-    setTimeout(() => {
+    
+    // Call facade calculation
+    try {
+      const { DesignFacade } = await import('../business/facade/DesignFacade');
+      const facade = new DesignFacade();
+      const result = await facade.performFullDesign({
+        F: Number(force),
+        v: Number(velocity),
+        D: Number(diameter),
+        L: life ? Number(life) : undefined,
+        t1: t1 ? Number(t1) : undefined,
+        T1_ratio: T1 ? Number(T1) : undefined, // treat as ratio for now
+        t2: t2 ? Number(t2) : undefined,
+        T2_ratio: T2 ? Number(T2) : undefined,
+      });
+
       setLoading(false);
       navigation.navigate('Result', {
-        input: {
-          F: Number(force),
-          v: Number(velocity),
-          D: Number(diameter),
-        },
+        resultData: result,
+        input: { F: force, v: velocity, D: diameter },
         strategy: 'cost',
       });
-    }, 1200);
+    } catch (e) {
+      console.error(e);
+      setLoading(false);
+    }
   };
 
   return (
