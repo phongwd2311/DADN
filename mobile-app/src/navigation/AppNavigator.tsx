@@ -13,16 +13,20 @@ import InputScreen from '../screens/InputScreen';
 import ResultScreen from '../screens/ResultScreen';
 import HistoryScreen from '../screens/HistoryScreen';
 import ProfileScreen from '../screens/ProfileScreen';
+import DeviceSuggestionScreen from '../screens/DeviceSuggestionScreen';
+import DeviceDetailScreen from '../screens/DeviceDetailScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 const CalculateStack = createNativeStackNavigator();
 
-// Calculate Stack: Input -> Result
+// Calculate Stack: Input -> Result -> DeviceSuggestion
 const CalculateStackNavigator = () => (
   <CalculateStack.Navigator screenOptions={{ headerShown: false }}>
     <CalculateStack.Screen name="Input" component={InputScreen} />
     <CalculateStack.Screen name="Result" component={ResultScreen} />
+    <CalculateStack.Screen name="DeviceSuggestion" component={DeviceSuggestionScreen} />
+    <CalculateStack.Screen name="DeviceDetail" component={DeviceDetailScreen} />
   </CalculateStack.Navigator>
 );
 

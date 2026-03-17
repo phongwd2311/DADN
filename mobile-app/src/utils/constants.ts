@@ -18,20 +18,55 @@ export const GEAR_RATIO_SB = {
   u2: 2.5,   // Cấp chậm (HGT khai triển)
 };
 
-// Bảng Phụ lục P1.2 – Động cơ điện (một số mẫu phổ biến 4P – 1450rpm)
 export const MOTOR_TABLE = [
-  { id: 'DK.41-4',  power: 0.55, speed: 1450, type: '4P', Tk_Tdn: 2.0 },
-  { id: 'DK.42-4',  power: 0.75, speed: 1450, type: '4P', Tk_Tdn: 2.0 },
-  { id: 'DK.51-4',  power: 1.1,  speed: 1450, type: '4P', Tk_Tdn: 2.0 },
-  { id: 'DK.52-4',  power: 1.5,  speed: 1420, type: '4P', Tk_Tdn: 2.0 },
-  { id: 'DK.61-4',  power: 2.2,  speed: 1430, type: '4P', Tk_Tdn: 2.0 },
-  { id: 'DK.62-4',  power: 3.0,  speed: 1430, type: '4P', Tk_Tdn: 2.0 },
-  { id: 'DK.71-4',  power: 4.0,  speed: 1440, type: '4P', Tk_Tdn: 2.0 },
-  { id: 'DK.72-4',  power: 5.5,  speed: 1440, type: '4P', Tk_Tdn: 2.0 },
-  { id: 'DK.81-4',  power: 7.5,  speed: 1450, type: '4P', Tk_Tdn: 2.0 },
-  { id: 'DK.82-4',  power: 10,   speed: 1450, type: '4P', Tk_Tdn: 2.0 },
-  { id: 'DK.91-4',  power: 13,   speed: 1460, type: '4P', Tk_Tdn: 2.0 },
-  { id: 'DK.92-4',  power: 15,   speed: 1460, type: '4P', Tk_Tdn: 2.0 },
+  // Động cơ 2 pha (2P) ~ 3000 v/p
+  { id: 'DK_2P.055', power: 0.55, speed: 2800, type: '2P', Tk_Tdn: 2.0 },
+  { id: 'DK_2P.075', power: 0.75, speed: 2820, type: '2P', Tk_Tdn: 2.0 },
+  { id: 'DK_2P.110', power: 1.1,  speed: 2820, type: '2P', Tk_Tdn: 2.0 },
+  { id: 'DK_2P.150', power: 1.5,  speed: 2840, type: '2P', Tk_Tdn: 2.0 },
+  { id: 'DK_2P.220', power: 2.2,  speed: 2840, type: '2P', Tk_Tdn: 2.0 },
+  { id: 'DK_2P.300', power: 3.0,  speed: 2860, type: '2P', Tk_Tdn: 2.0 },
+  { id: 'DK_2P.400', power: 4.0,  speed: 2880, type: '2P', Tk_Tdn: 2.0 },
+  { id: 'DK_2P.550', power: 5.5,  speed: 2880, type: '2P', Tk_Tdn: 2.0 },
+  { id: 'DK_2P.750', power: 7.5,  speed: 2900, type: '2P', Tk_Tdn: 2.0 },
+
+  // Động cơ 4 pha (4P) ~ 1500 v/p (Phổ biến nhất)
+  { id: 'DK_4P.055', power: 0.55, speed: 1450, type: '4P', Tk_Tdn: 2.0 },
+  { id: 'DK_4P.075', power: 0.75, speed: 1450, type: '4P', Tk_Tdn: 2.0 },
+  { id: 'DK_4P.110', power: 1.1,  speed: 1450, type: '4P', Tk_Tdn: 2.0 },
+  { id: 'DK_4P.150', power: 1.5,  speed: 1420, type: '4P', Tk_Tdn: 2.0 },
+  { id: 'DK_4P.220', power: 2.2,  speed: 1430, type: '4P', Tk_Tdn: 2.0 },
+  { id: 'DK_4P.300', power: 3.0,  speed: 1430, type: '4P', Tk_Tdn: 2.0 },
+  { id: 'DK_4P.400', power: 4.0,  speed: 1440, type: '4P', Tk_Tdn: 2.0 },
+  { id: 'DK_4P.550', power: 5.5,  speed: 1440, type: '4P', Tk_Tdn: 2.0 },
+  { id: 'DK_4P.750', power: 7.5,  speed: 1450, type: '4P', Tk_Tdn: 2.0 },
+  { id: 'DK_4P.100', power: 10,   speed: 1450, type: '4P', Tk_Tdn: 2.0 },
+  { id: 'DK_4P.110', power: 11,   speed: 1460, type: '4P', Tk_Tdn: 2.0 },
+  { id: 'DK_4P.150', power: 15,   speed: 1460, type: '4P', Tk_Tdn: 2.0 },
+  { id: 'DK_4P.185', power: 18.5, speed: 1470, type: '4P', Tk_Tdn: 2.0 },
+  { id: 'DK_4P.220', power: 22,   speed: 1470, type: '4P', Tk_Tdn: 2.0 },
+
+  // Động cơ 6 pha (6P) ~ 1000 v/p
+  { id: 'DK_6P.055', power: 0.55, speed: 960,  type: '6P', Tk_Tdn: 2.0 },
+  { id: 'DK_6P.075', power: 0.75, speed: 960,  type: '6P', Tk_Tdn: 2.0 },
+  { id: 'DK_6P.110', power: 1.1,  speed: 960,  type: '6P', Tk_Tdn: 2.0 },
+  { id: 'DK_6P.150', power: 1.5,  speed: 960,  type: '6P', Tk_Tdn: 2.0 },
+  { id: 'DK_6P.220', power: 2.2,  speed: 970,  type: '6P', Tk_Tdn: 2.0 },
+  { id: 'DK_6P.300', power: 3.0,  speed: 970,  type: '6P', Tk_Tdn: 2.0 },
+  { id: 'DK_6P.400', power: 4.0,  speed: 970,  type: '6P', Tk_Tdn: 2.0 },
+  { id: 'DK_6P.550', power: 5.5,  speed: 970,  type: '6P', Tk_Tdn: 2.0 },
+  { id: 'DK_6P.750', power: 7.5,  speed: 970,  type: '6P', Tk_Tdn: 2.0 },
+  { id: 'DK_6P.1100', power: 11.0, speed: 970,  type: '6P', Tk_Tdn: 2.0 },
+  { id: 'DK_6P.1500', power: 15.0, speed: 970,  type: '6P', Tk_Tdn: 2.0 },
+
+  // Động cơ 8 pha (8P) ~ 750 v/p
+  { id: 'DK_8P.075', power: 0.75, speed: 720,  type: '8P', Tk_Tdn: 2.0 },
+  { id: 'DK_8P.110', power: 1.1,  speed: 720,  type: '8P', Tk_Tdn: 2.0 },
+  { id: 'DK_8P.150', power: 1.5,  speed: 720,  type: '8P', Tk_Tdn: 2.0 },
+  { id: 'DK_8P.220', power: 2.2,  speed: 720,  type: '8P', Tk_Tdn: 2.0 },
+  { id: 'DK_8P.300', power: 3.0,  speed: 720,  type: '8P', Tk_Tdn: 2.0 },
+  { id: 'DK_8P.400', power: 4.0,  speed: 720,  type: '8P', Tk_Tdn: 2.0 },
+  { id: 'DK_8P.550', power: 5.5,  speed: 720,  type: '8P', Tk_Tdn: 2.0 },
 ];
 
 // Bảng 5.5 – Bước xích ống con lăn (p, Q phá hỏng, q khối lượng/m, A diện tích bản lề)

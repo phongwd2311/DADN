@@ -7,6 +7,7 @@ interface Column {
   title: string;
   width?: number;
   align?: 'left' | 'center' | 'right';
+  isHighlight?: boolean;
 }
 
 interface DataTableProps {
@@ -51,7 +52,11 @@ const DataTable: React.FC<DataTableProps> = ({ columns, data, title }) => {
                     idx === 0 ? styles.firstCell : {}
                   ]}
                 >
-                  <Text style={[styles.dataText, rowIndex === data.length - 1 ? styles.lastRowText : {}]}>
+                  <Text style={[
+                    styles.dataText, 
+                    rowIndex === data.length - 1 ? styles.lastRowText : {},
+                    col.isHighlight ? { color: Colors.primary, fontWeight: '600' } : {}
+                  ]}>
                     {row[col.key]}
                   </Text>
                 </View>

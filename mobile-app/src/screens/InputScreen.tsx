@@ -62,19 +62,48 @@ const InputScreen = ({ navigation }: any) => {
     
     // Call facade calculation
     try {
+      // Calculate ratios if T1 and T2 are provided
+      // T_ratio = (T_i / T_max). By convention in these problems, usually T1 is the maximum torque (T_max).
+      // If user inputs T1 and T2, then T1_ratio = T1/T1 = 1.0, T2_ratio = T2/T1.
+      const t1Num = t1 ? Number(t1) : undefined;
+      const t2Num = t2 ? Number(t2) : undefined;
+      
+      const T1Num = T1 ? Number(T1) : undefined;
+      const T2Num = T2 ? Number(T2) : undefined;
+      
+      let T1_ratio = 1;
+      let T2_ratio = 1;
+      
+      if (T1Num !== undefined && T2Num !== undefined) {
+        // T1 is considered T_max
+        T1_ratio = 1;
+        T2_ratio = T2Num / T1Num;
+      }
+
       const { DesignFacade } = await import('../business/facade/DesignFacade');
       const facade = new DesignFacade();
+      console.log("Calling performFullDesign with:", {
+        F: Number(force),
+        v: Number(velocity),
+        D: Number(diameter),
+        L: life ? Number(life) : undefined,
+        t1: t1Num,
+        T1_ratio: T1_ratio,
+        t2: t2Num,
+        T2_ratio: T2_ratio,
+      });
       const result = await facade.performFullDesign({
         F: Number(force),
         v: Number(velocity),
         D: Number(diameter),
         L: life ? Number(life) : undefined,
-        t1: t1 ? Number(t1) : undefined,
-        T1_ratio: T1 ? Number(T1) : undefined, // treat as ratio for now
-        t2: t2 ? Number(t2) : undefined,
-        T2_ratio: T2 ? Number(T2) : undefined,
+        t1: t1Num,
+        T1_ratio: T1_ratio,
+        t2: t2Num,
+        T2_ratio: T2_ratio,
       });
 
+      console.log("Calculation successful:", !!result);
       setLoading(false);
       navigation.navigate('Result', {
         resultData: result,
@@ -82,7 +111,7 @@ const InputScreen = ({ navigation }: any) => {
         strategy: 'cost',
       });
     } catch (e) {
-      console.error(e);
+      console.error("Calculation Error:", e);
       setLoading(false);
     }
   };
