@@ -3,24 +3,30 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
-import { View, StyleSheet } from 'react-native';
-import { Colors, Shadows } from '../utils/theme';
+import { Colors } from '../utils/theme';
 
+import WelcomeScreen from '../screens/WelcomeScreen';
 import LoginScreen from '../screens/LoginScreen';
+import RegisterScreen from '../screens/RegisterScreen';
 import HomeScreen from '../screens/HomeScreen';
 import InputScreen from '../screens/InputScreen';
 import ResultScreen from '../screens/ResultScreen';
 import HistoryScreen from '../screens/HistoryScreen';
+import ProfileScreen from '../screens/ProfileScreen';
+import DeviceSuggestionScreen from '../screens/DeviceSuggestionScreen';
+import DeviceDetailScreen from '../screens/DeviceDetailScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 const CalculateStack = createNativeStackNavigator();
 
-// Calculate Stack: Input -> Result
+// Calculate Stack: Input -> Result -> DeviceSuggestion
 const CalculateStackNavigator = () => (
   <CalculateStack.Navigator screenOptions={{ headerShown: false }}>
     <CalculateStack.Screen name="Input" component={InputScreen} />
     <CalculateStack.Screen name="Result" component={ResultScreen} />
+    <CalculateStack.Screen name="DeviceSuggestion" component={DeviceSuggestionScreen} />
+    <CalculateStack.Screen name="DeviceDetail" component={DeviceDetailScreen} />
   </CalculateStack.Navigator>
 );
 
@@ -47,7 +53,7 @@ const MainTabNavigator = () => (
       tabBarActiveTintColor: Colors.primary,
       tabBarInactiveTintColor: Colors.textMuted,
       tabBarStyle: {
-        backgroundColor: Colors.surface,
+        backgroundColor: Colors.surface, // Now uses white from Light Theme
         borderTopColor: Colors.border,
         borderTopWidth: 1,
         height: 60,
@@ -65,7 +71,7 @@ const MainTabNavigator = () => (
     <Tab.Screen name="History" component={HistoryScreen} />
     <Tab.Screen
       name="Profile"
-      component={HomeScreen}
+      component={ProfileScreen}
       options={{ tabBarLabel: 'Profile' }}
     />
   </Tab.Navigator>
@@ -76,12 +82,15 @@ const AppNavigator = () => {
   return (
     <NavigationContainer>
       <Stack.Navigator
+        initialRouteName="Welcome"
         screenOptions={{
           headerShown: false,
           animation: 'slide_from_right',
         }}
       >
+        <Stack.Screen name="Welcome" component={WelcomeScreen} />
         <Stack.Screen name="Login" component={LoginScreen} />
+        <Stack.Screen name="Register" component={RegisterScreen} />
         <Stack.Screen name="Main" component={MainTabNavigator} />
       </Stack.Navigator>
     </NavigationContainer>
@@ -89,3 +98,4 @@ const AppNavigator = () => {
 };
 
 export default AppNavigator;
+

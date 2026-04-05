@@ -1,11 +1,9 @@
-// FR-CAL-008: Facade Design Pattern
-// Class này đóng vai trò là đầu mối duy nhất để UI gọi xuống tầng xử lý nghiệp vụ
-// Giúp giảm sự phụ thuộc giữa giao diện và các module tính toán phức tạp.
-
 import { MotorCalculation } from "../calculations/MotorCalc";
 import { GearRatioDistributor } from "../calculations/GearRatio";
 import { ChainDriveDesign } from "../calculations/ChainDesign";
 import { ExpertSystem } from "../../expert_system/ExpertSystem";
+import { InputParams } from "../../types/input";
+import { CalculationResult } from "../../types/result";
 
 export class DesignFacade {
   private motorCalc: MotorCalculation;
@@ -22,29 +20,32 @@ export class DesignFacade {
 
   /**
    * Thực hiện quy trình tính toán toàn vẹn
-   * @param inputData Dữ liệu nhập từ User
    */
-  public async performFullDesign(inputData: any) {
+  public async performFullDesign(inputData: InputParams): Promise<CalculationResult> {
     // 1. Tính toán chọn động cơ (FR-CAL-001)
-    const motorSpecs = this.motorCalc.calculatePower(inputData);
+    const { Plv, Ptd, eta, Pct, nlv, nsb } = this.motorCalc.calculatePower(inputData);
+    const motor = this.motorCalc.selectMotor(Pct, nsb);
 
-    // 2. Gợi ý linh kiện động cơ (System Expert)
-    const suggestedMotors = await this.expertSystem.suggestMotors(motorSpecs);
+    // 2. Gợi ý linh kiện động cơ (Expert System - Placeholder logic thêm nếu cần)
+    // Tạm thời bỏ qua expertSystem vì selectMotor đã chọn cái tốt nhất từ MOTOR_TABLE
 
     // 3. Phân phối tỷ số truyền (FR-CAL-004)
-    const transmission = this.gearDistributor.distribute(
-      motorSpecs,
-      suggestedMotors[0],
+    const { ut, uh, ux, u1, u2, shaftTable } = this.gearDistributor.distribute(
+      motor, nlv, Plv, eta
     );
 
     // 4. Thiết kế bộ truyền xích (FR-CAL-006)
-    const chainDesign = this.chainDesigner.design(transmission);
+    // Lấy P3, n3 từ mảng shaft để tính xích
+    const P3 = shaftTable.truc3.P;
+    const n3 = shaftTable.truc3.n;
+    const { chainParams, strength } = this.chainDesigner.design(P3, n3, ux);
 
     return {
-      motorSpecs,
-      suggestedMotors,
-      transmission,
-      chainDesign,
+      Plv, Ptd, eta, Pct, nlv, nsb,
+      motor,
+      shaftTable,
+      chainParams,
+      chainStrength: strength
     };
   }
 }

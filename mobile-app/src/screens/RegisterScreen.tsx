@@ -14,26 +14,33 @@ import { Colors, Typography, Spacing, BorderRadius, Shadows } from '../utils/the
 import CustomInput from '../components/CustomInput';
 import GradientButton from '../components/GradientButton';
 
-const LoginScreen = ({ navigation }: any) => {
+const RegisterScreen = ({ navigation }: any) => {
+  const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+  const [errors, setErrors] = useState<{ fullName?: string; email?: string; password?: string; confirmPassword?: string }>({});
 
   const validate = () => {
-    const newErrors: { email?: string; password?: string } = {};
+    const newErrors: { fullName?: string; email?: string; password?: string; confirmPassword?: string } = {};
+    if (!fullName.trim()) newErrors.fullName = 'Full Name is required';
     if (!email.trim()) newErrors.email = 'Email is required';
     else if (!/\S+@\S+\.\S+/.test(email)) newErrors.email = 'Invalid email format';
+    
     if (!password.trim()) newErrors.password = 'Password is required';
     else if (password.length < 6) newErrors.password = 'Password must be at least 6 characters';
+    
+    if (password !== confirmPassword) newErrors.confirmPassword = 'Passwords do not match';
+    
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleLogin = () => {
+  const handleRegister = () => {
     if (!validate()) return;
     setLoading(true);
-    // Simulate login
+    // Simulate register
     setTimeout(() => {
       setLoading(false);
       navigation.replace('Main');
@@ -68,19 +75,27 @@ const LoginScreen = ({ navigation }: any) => {
           <View style={[styles.authCard, Shadows.card]}>
             {/* Tabs */}
             <View style={styles.tabContainer}>
-              <TouchableOpacity style={styles.activeTab}>
-                <Text style={styles.activeTabText}>Đăng nhập</Text>
-              </TouchableOpacity>
               <TouchableOpacity 
                 style={styles.inactiveTab}
-                onPress={() => navigation.replace('Register')}
+                onPress={() => navigation.replace('Login')}
               >
-                <Text style={styles.inactiveTabText}>Đăng ký</Text>
+                <Text style={styles.inactiveTabText}>Đăng nhập</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.activeTab}>
+                <Text style={styles.activeTabText}>Đăng ký</Text>
               </TouchableOpacity>
             </View>
 
             {/* Form */}
             <View style={styles.formContainer}>
+              <CustomInput
+                label="Họ và tên"
+                value={fullName}
+                onChangeText={setFullName}
+                placeholder="Nguyễn Văn A"
+                error={errors.fullName}
+              />
+
               <CustomInput
                 label="Email"
                 value={email}
@@ -99,16 +114,21 @@ const LoginScreen = ({ navigation }: any) => {
                 error={errors.password}
               />
 
-              <TouchableOpacity style={styles.forgotPassword}>
-                <Text style={styles.forgotPasswordText}>Quên mật khẩu?</Text>
-              </TouchableOpacity>
+              <CustomInput
+                label="Xác nhận mật khẩu"
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+                placeholder="••••••••"
+                secureTextEntry
+                error={errors.confirmPassword}
+              />
 
               <GradientButton
-                title="Đăng nhập"
-                onPress={handleLogin}
+                title="Đăng ký"
+                onPress={handleRegister}
                 loading={loading}
-                style={styles.loginBtnWrapper}
-                icon={<Ionicons name="log-in-outline" size={20} color="#fff" />}
+                style={styles.registerBtnWrapper}
+                icon={<Ionicons name="person-add-outline" size={20} color="#fff" />}
               />
 
               {/* Divider */}
@@ -129,7 +149,7 @@ const LoginScreen = ({ navigation }: any) => {
           {/* Footer */}
           <View style={styles.footerSection}>
             <Text style={styles.footerText}>
-              Bằng việc đăng nhập, bạn đồng ý với{' '}
+              Bằng việc đăng ký, bạn đồng ý với{' '}
               <Text style={styles.linkText}>Điều khoản dịch vụ</Text> và{' '}
               <Text style={styles.linkText}>Chính sách bảo mật</Text>
             </Text>
@@ -229,16 +249,8 @@ const styles = StyleSheet.create({
   formContainer: {
     width: '100%',
   },
-  forgotPassword: {
-    alignSelf: 'flex-end',
-    marginBottom: Spacing.lg,
-  },
-  forgotPasswordText: {
-    color: Colors.primary,
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  loginBtnWrapper: {
+  registerBtnWrapper: {
+    marginTop: Spacing.sm,
     marginBottom: Spacing.lg,
   },
 
@@ -282,7 +294,7 @@ const styles = StyleSheet.create({
   // Footer
   footerSection: {
     marginTop: 'auto',
-    paddingTop: Spacing.xl,
+    paddingTop: Spacing.md,
   },
   footerText: {
     color: Colors.textMuted,
@@ -295,4 +307,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default LoginScreen;
+export default RegisterScreen;
