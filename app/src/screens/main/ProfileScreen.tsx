@@ -11,7 +11,16 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Typography, Spacing, BorderRadius, Shadows } from '../../utils/theme';
 
+import { AuthContext } from '../../context/AuthContext';
+
 const ProfileScreen = ({ navigation }: any) => {
+  const { user, logout } = React.useContext(AuthContext);
+
+  const handleLogout = async () => {
+    await logout();
+    // AppNavigator will automatically handle the redirect to Auth Stack
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
@@ -33,8 +42,8 @@ const ProfileScreen = ({ navigation }: any) => {
               <Ionicons name="person-outline" size={32} color="#fff" />
             </LinearGradient>
             <View style={styles.userInfoText}>
-              <Text style={styles.userName}>Khai</Text>
-              <Text style={styles.userEmail}>khai@drivecalc.com</Text>
+              <Text style={styles.userName}>{user?.username || 'Khách'}</Text>
+              <Text style={styles.userEmail}>{user?.email || 'Chưa đăng nhập'}</Text>
             </View>
           </View>
 
@@ -42,21 +51,21 @@ const ProfileScreen = ({ navigation }: any) => {
 
           <View style={styles.statRow}>
             <Text style={styles.statLabel}>Total Calculations</Text>
-            <Text style={styles.statValue}>12</Text>
+            <Text style={styles.statValue}>-</Text>
           </View>
           
           <View style={styles.divider} />
 
           <View style={styles.statRow}>
             <Text style={styles.statLabel}>Saved Projects</Text>
-            <Text style={styles.statValue}>3</Text>
+            <Text style={styles.statValue}>-</Text>
           </View>
           
           <View style={styles.divider} />
 
           <View style={styles.statRow}>
             <Text style={styles.statLabel}>Member Since</Text>
-            <Text style={styles.statValue}>Oct 2024</Text>
+            <Text style={styles.statValue}>2024</Text>
           </View>
         </View>
 
@@ -78,7 +87,7 @@ const ProfileScreen = ({ navigation }: any) => {
 
           <TouchableOpacity 
             style={styles.menuItem}
-            onPress={() => navigation.replace('Welcome')}
+            onPress={handleLogout}
           >
             <Text style={styles.signOutText}>Sign Out</Text>
           </TouchableOpacity>

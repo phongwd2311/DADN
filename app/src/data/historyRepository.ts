@@ -4,6 +4,7 @@
 import { LocalDb } from './localDb';
 import { InputParams } from '../types/input';
 import { CalculationResult } from '../types/result';
+import { sessionApi } from '../api/sessionApi';
 
 export interface HistoryRecord {
   id: string;
@@ -39,6 +40,27 @@ export const HistoryRepository = {
         },
       },
     };
+
+    // Đồng bộ lên Backend (try-catch để không sập app nếu mất mạng)
+    try {
+      const backendInput = {
+        force_f: input.F,
+        velocity_v: input.v,
+        diameter_d: input.D,
+        lifespan_l: input.L,
+      };
+
+      const backendResult = {
+        equivalent_power: result.motor?.power,
+        total_ratio_ut: result.shaftTable?.truc1?.u, // Lấy tạm u1
+      };
+
+      const sessionName = `Hệ dẫn động ${new Date().toLocaleDateString('vi-VN')}`;
+      await sessionApi.create(sessionName, backendInput, backendResult);
+    } catch (error) {
+      console.log("Lỗi đồng bộ mây, chỉ lưu local:", error);
+    }
+
     return LocalDb.save('history', record);
   },
 
