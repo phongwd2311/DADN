@@ -13,6 +13,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { Colors, Typography, Spacing, BorderRadius, Shadows } from '../../utils/theme';
 import CustomInput from '../../components/CustomInput';
 import GradientButton from '../../components/GradientButton';
+import { AuthContext } from '../../context/AuthContext';
+import { authApi } from '../../api/authApi';
 
 const RegisterScreen = ({ navigation }: any) => {
   const [fullName, setFullName] = useState('');
@@ -37,14 +39,25 @@ const RegisterScreen = ({ navigation }: any) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleRegister = () => {
+  const { login } = React.useContext(AuthContext);
+
+  const handleRegister = async () => {
     if (!validate()) return;
     setLoading(true);
-    // Simulate register
-    setTimeout(() => {
+    setErrors({ fullName: '', email: '', password: '', confirmPassword: '' });
+
+    try {
+      const data = await authApi.register(fullName, email, password);
+      // login automatically after register
+      await login(data.token, data.user);
+    } catch (error: any) {
+      console.log('Register error', error?.response?.data || error.message);
+      setErrors({ 
+        email: error?.response?.data?.error || 'Đăng ký thất bại. Vui lòng thử lại.' 
+      });
+    } finally {
       setLoading(false);
-      navigation.replace('Main');
-    }, 1500);
+    }
   };
 
   return (

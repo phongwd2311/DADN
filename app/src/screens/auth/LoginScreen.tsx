@@ -13,6 +13,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { Colors, Typography, Spacing, BorderRadius, Shadows } from '../../utils/theme';
 import CustomInput from '../../components/CustomInput';
 import GradientButton from '../../components/GradientButton';
+import { AuthContext } from '../../context/AuthContext';
+import { authApi } from '../../api/authApi';
 
 const LoginScreen = ({ navigation }: any) => {
   const [email, setEmail] = useState('');
@@ -30,14 +32,26 @@ const LoginScreen = ({ navigation }: any) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleLogin = () => {
+  const { login } = React.useContext(AuthContext);
+
+  const handleLogin = async () => {
     if (!validate()) return;
     setLoading(true);
-    // Simulate login
-    setTimeout(() => {
+    setErrors({ email: '', password: '' });
+
+    try {
+      const data = await authApi.login(email, password);
+      // data: { message, token, user }
+      await login(data.token, data.user);
+      // Removed navigation.replace('Main') because AppNavigator will auto transition
+    } catch (error: any) {
+      console.log('Login error', error?.response?.data || error.message);
+      setErrors({ 
+        password: error?.response?.data?.error || 'Đăng nhập thất bại. Vui lòng thử lại.' 
+      });
+    } finally {
       setLoading(false);
-      navigation.replace('Main');
-    }, 1500);
+    }
   };
 
   return (
