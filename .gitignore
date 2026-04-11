@@ -1,0 +1,25 @@
+# IDE & Agent Configs
+.claude/
+.gitnexus/
+.agent/
+.vscode/
+.idea/
+
+# Backend (Node.js & Prisma)
+backend/node_modules/
+backend/.env
+backend/.env.*
+!backend/.env.example
+
+# Frontend (Expo/React Native)
+app/node_modules/
+app/.expo/
+app/.env
+app/dist/
+app/web-build/
+app/**/*.log
+app/**/*.pcap
+
+# OS generated files
+.DS_Store
+Thumbs.db

@@ -1,0 +1,162 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// 1. Bảng Người dùng
+model User {
+  user_id       Int       @id @default(autoincrement())
+  username      String    @unique @db.VarChar(50)
+  password_hash String    @db.VarChar(255)
+  email         String    @unique @db.VarChar(100)
+  role          String?   @default("USER") @db.VarChar(20)
+  join_date     DateTime? @default(now()) @db.Timestamp(6)
+  
+  sessions      CalculationSession[]
+
+  @@map("users")
+}
+
+// 2. Bảng Phiên tính toán
+model CalculationSession {
+  session_id   Int       @id @default(autoincrement())
+  user_id      Int?
+  session_name String    @db.VarChar(255)
+  created_at   DateTime? @default(now()) @db.Timestamp(6)
+  is_synced    Boolean?  @default(false)
+  
+  user         User?     @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
+
+  design_inputs   DesignInput[]
+  design_results  DesignResult[]
+  ai_suggestions  AiSuggestion[]
+
+  @@map("calculation_sessions")
+}
+
+// 3. Bảng Thông số đầu vào
+model DesignInput {
+  input_id   Int       @id @default(autoincrement())
+  session_id Int?
+  force_f    Float?
+  velocity_v Float?
+  diameter_d Float?
+  lifespan_l Float?
+  t1_percent Float?
+  t1_torque  Float?
+  t2_percent Float?
+  t2_torque  Float?
+
+  session    CalculationSession? @relation(fields: [session_id], references: [session_id], onDelete: Cascade)
+
+  @@map("design_inputs")
+}
+
+// 4. Bảng Kết quả tổng hợp
+model DesignResult {
+  result_id          Int       @id @default(autoincrement())
+  session_id         Int?
+  equivalent_power   Float?
+  total_efficiency   Float?
+  required_power_pct Float?
+  total_ratio_ut     Float?
+  u1_ratio           Float?
+  u2_ratio           Float?
+
+  session    CalculationSession? @relation(fields: [session_id], references: [session_id], onDelete: Cascade)
+  shafts     Shaft[]
+  bearings   Bearing[]
+  gear_drives GearDrive[]
+  housings   Housing[]
+
+  @@map("design_results")
+}
+
+// 5. Bảng Trục (Quan hệ 1-n)
+model Shaft {
+  shaft_id    Int       @id @default(autoincrement())
+  result_id   Int?
+  shaft_order Int?
+  power_p     Float?
+  speed_n     Float?
+  torque_t    Float?
+  material    String?   @db.VarChar(100)
+  diameter_d  Float?
+
+  result      DesignResult? @relation(fields: [result_id], references: [result_id], onDelete: Cascade)
+
+  @@map("shafts")
+}
+
+// 6. Bảng Ổ lăn (Quan hệ 1-n)
+model Bearing {
+  bearing_id          Int       @id @default(autoincrement())
+  result_id           Int?
+  position            String?   @db.VarChar(100)
+  bearing_model       String?   @db.VarChar(50)
+  inner_diameter_d    Float?
+  dynamic_capacity_c  Float?
+  calculated_life_lh  Float?
+
+  result              DesignResult? @relation(fields: [result_id], references: [result_id], onDelete: Cascade)
+
+  @@map("bearings")
+}
+
+// 7. Bảng Bánh răng (Tab Bánh răng nhanh/chậm)
+model GearDrive {
+  gear_id         Int       @id @default(autoincrement())
+  result_id       Int?
+  gear_type       String?   @db.VarChar(50)
+  module          Float?
+  teeth_number    Int?
+  center_distance Float?
+
+  result          DesignResult? @relation(fields: [result_id], references: [result_id], onDelete: Cascade)
+
+  @@map("gear_drives")
+}
+
+// 8. Bảng Vỏ hộp
+model Housing {
+  housing_id      Int       @id @default(autoincrement())
+  result_id       Int?
+  material        String?   @db.VarChar(100)
+  wall_thickness  Float?
+  distance_center Float?
+
+  result          DesignResult? @relation(fields: [result_id], references: [result_id], onDelete: Cascade)
+
+  @@map("housings")
+}
+
+// 9. Thư viện linh kiện (Admin quản lý)
+model MotorLibrary {
+  motor_id    Int       @id @default(autoincrement())
+  model       String    @db.VarChar(50)
+  rated_power Float?
+  rated_speed Float?
+  efficiency  Float?
+
+  suggestions AiSuggestion[]
+
+  @@map("motor_library")
+}
+
+// 10. Bảng Gợi ý AI (Expert System)
+model AiSuggestion {
+  suggestion_id     Int       @id @default(autoincrement())
+  session_id        Int?
+  motor_id          Int?
+  suitability_score Float?
+  ai_reason         String?   @db.Text
+  strategy_used     String?   @db.VarChar(50)
+
+  session           CalculationSession? @relation(fields: [session_id], references: [session_id])
+  motor             MotorLibrary?       @relation(fields: [motor_id], references: [motor_id])
+
+  @@map("ai_suggestions")
+}

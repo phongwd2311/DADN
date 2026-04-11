@@ -1,4 +1,4 @@
-# DADN - Conveyor Design Project
+# GearDrive - Conveyor Design Project
 
 Dự án Đồ án tốt nghiệp - Hệ thống hỗ trợ tính toán thiết kế hệ dẫn động băng tải (Mobile App).
 
@@ -6,3 +6,4 @@ Dự án Đồ án tốt nghiệp - Hệ thống hỗ trợ tính toán thiết 
 
 - `mobile-app/`: Source code ứng dụng React Native.
 - `docs/`: Tài liệu dự án.
+    
