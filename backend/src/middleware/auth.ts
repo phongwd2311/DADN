@@ -34,7 +34,9 @@ export function authMiddleware(req: AuthRequest, res: Response, next: NextFuncti
 
   try {
     const decoded = jwt.verify(token, JWT_SECRET) as { userId: number; email: string };
+    // lưu vào req.user để dùng các router khác mà không cần phải gửi id từ frontend lên
     req.user = decoded;
+    // cho phép đi vào router chính
     next();
   } catch (err) {
     res.status(401).json({ error: "Token không hợp lệ hoặc đã hết hạn." });

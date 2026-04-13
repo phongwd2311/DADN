@@ -1,7 +1,7 @@
 // Service kiểm tra dữ liệu nhập vào
 
-export const validateInput = (inputData) => {
-  const errors = {};
+export const validateInput = (inputData: any) => {
+  const errors: any = {};
 
   if (!inputData.F || inputData.F <= 0) {
     errors.F = "Lực vòng F phải lớn hơn 0";

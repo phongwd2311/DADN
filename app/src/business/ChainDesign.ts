@@ -1,5 +1,5 @@
-import { ChainParams, ChainStrengthCheck } from "../../types/result";
-import { CHAIN_TABLE, CHAIN_POWER_TABLE, SAFETY_FACTOR_TABLE, CHAIN_USE_FACTORS, CONTACT_STRESS_ALLOW, ELASTIC_MODULUS } from "../../utils/constants";
+import { ChainParams, ChainStrengthCheck } from "../types/result";
+import { CHAIN_TABLE, CHAIN_POWER_TABLE, SAFETY_FACTOR_TABLE, CHAIN_USE_FACTORS, CONTACT_STRESS_ALLOW, ELASTIC_MODULUS } from "../utils/constants";
 
 export class ChainDriveDesign {
   /**

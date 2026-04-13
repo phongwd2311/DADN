@@ -89,7 +89,6 @@ router.post("/login", async (req: Request, res: Response): Promise<void> => {
       res.status(401).json({ error: "Email hoặc mật khẩu không đúng" });
       return;
     }
-
     // 3. So sánh password
     const isValid = await bcrypt.compare(password, user.password_hash);
     if (!isValid) {
