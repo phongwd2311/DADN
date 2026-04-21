@@ -1,7 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 
-// Mở rộng Request để gắn thông tin user sau khi xác thực
 export interface AuthRequest extends Request {
   user?: {
     userId: number;

@@ -59,9 +59,13 @@ router.post("/register", async (req: Request, res: Response): Promise<void> => {
         role: user.role,
       },
     });
-  } catch (err) {
-    console.error("Register error:", err);
-    res.status(500).json({ error: "Lỗi server" });
+  } catch (err: any) {
+    console.error("DEBUG - Register Error Details:", err);
+    res.status(500).json({ 
+      error: "Lỗi server chi tiết", 
+      message: err.message,
+      stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
+    });
   }
 });
 
