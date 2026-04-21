@@ -2,7 +2,6 @@ import { Pool } from "pg";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@prisma/client";
 
-// Singleton pattern: tránh tạo nhiều kết nối DB khi hot-reload trong development
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
 };
