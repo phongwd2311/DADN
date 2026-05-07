@@ -4,6 +4,9 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+  schemas  = ["public", "auth"]
 }
 
 // 1. Bảng Người dùng
@@ -17,6 +20,7 @@ model User {
   
   sessions      CalculationSession[]
 
+  @@schema("public")
   @@map("users")
 }
 
@@ -27,6 +31,8 @@ model CalculationSession {
   session_name String    @db.VarChar(255)
   created_at   DateTime? @default(now()) @db.Timestamp(6)
   is_synced    Boolean?  @default(false)
+  input_json   Json?
+  result_json  Json?
   
   user         User?     @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
 
@@ -34,6 +40,7 @@ model CalculationSession {
   design_results  DesignResult[]
   ai_suggestions  AiSuggestion[]
 
+  @@schema("public")
   @@map("calculation_sessions")
 }
 
@@ -52,6 +59,7 @@ model DesignInput {
 
   session    CalculationSession? @relation(fields: [session_id], references: [session_id], onDelete: Cascade)
 
+  @@schema("public")
   @@map("design_inputs")
 }
 
@@ -72,6 +80,7 @@ model DesignResult {
   gear_drives GearDrive[]
   housings   Housing[]
 
+  @@schema("public")
   @@map("design_results")
 }
 
@@ -88,6 +97,7 @@ model Shaft {
 
   result      DesignResult? @relation(fields: [result_id], references: [result_id], onDelete: Cascade)
 
+  @@schema("public")
   @@map("shafts")
 }
 
@@ -103,6 +113,7 @@ model Bearing {
 
   result              DesignResult? @relation(fields: [result_id], references: [result_id], onDelete: Cascade)
 
+  @@schema("public")
   @@map("bearings")
 }
 
@@ -117,6 +128,7 @@ model GearDrive {
 
   result          DesignResult? @relation(fields: [result_id], references: [result_id], onDelete: Cascade)
 
+  @@schema("public")
   @@map("gear_drives")
 }
 
@@ -130,6 +142,7 @@ model Housing {
 
   result          DesignResult? @relation(fields: [result_id], references: [result_id], onDelete: Cascade)
 
+  @@schema("public")
   @@map("housings")
 }
 
@@ -140,9 +153,11 @@ model MotorLibrary {
   rated_power Float?
   rated_speed Float?
   efficiency  Float?
+  tk_tdn      Float?
 
   suggestions AiSuggestion[]
 
+  @@schema("public")
   @@map("motor_library")
 }
 
@@ -158,5 +173,22 @@ model AiSuggestion {
   session           CalculationSession? @relation(fields: [session_id], references: [session_id])
   motor             MotorLibrary?       @relation(fields: [motor_id], references: [motor_id])
 
+  @@schema("public")
   @@map("ai_suggestions")
 }
+
+model schema_migrations {
+  version String @id @db.VarChar(255)
+
+  @@schema("public")
+  @@ignore
+}
+
+model AuthSchemaMigrations {
+  version String @id @db.VarChar(255)
+
+  @@schema("auth")
+  @@map("schema_migrations")
+  @@ignore
+}
+

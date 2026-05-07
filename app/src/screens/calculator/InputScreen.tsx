@@ -7,32 +7,37 @@ import {
   KeyboardAvoidingView,
   Platform,
   SafeAreaView,
+  TouchableOpacity,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Typography, Spacing, BorderRadius, Shadows } from '../../utils/theme';
 import CustomInput from '../../components/CustomInput';
 import GradientButton from '../../components/GradientButton';
+import { calculateApi, GearboxType } from '../../api/calculateApi';
 
 const InputScreen = ({ navigation }: any) => {
   const [force, setForce] = useState('');
   const [velocity, setVelocity] = useState('');
   const [diameter, setDiameter] = useState('');
-  const [life, setLife] = useState('');
   const [t1, setT1] = useState('');
   const [T1, setTr1] = useState('');
   const [t2, setT2] = useState('');
   const [T2, setTr2] = useState('');
+  const [uh, setUh] = useState('12.5');
+  const [tmmRatio, setTmmRatio] = useState('1.6');
+  const [gearboxType, setGearboxType] = useState<GearboxType>('KHAI_TRIEN');
   const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState<{ force?: string; velocity?: string; diameter?: string }>({});
+  const [errors, setErrors] = useState<{ force?: string; velocity?: string; diameter?: string; uh?: string; tmmRatio?: string }>({});
 
   const validate = () => {
     const newErrors: Record<string, string> = {};
     const fVal = Number(force);
     const vVal = Number(velocity);
     const dVal = Number(diameter);
-    const lVal = Number(life);
     const t1Val = Number(t1);
     const t2Val = Number(t2);
+    const uhVal = Number(uh);
+    const tmmVal = Number(tmmRatio);
 
     if (!force.trim()) newErrors.force = 'Yêu cầu nhập lực';
     else if (isNaN(fVal) || fVal <= 0 || fVal > 50000) newErrors.force = '0 < F ≤ 50,000 N';
@@ -43,9 +48,10 @@ const InputScreen = ({ navigation }: any) => {
     if (!diameter.trim()) newErrors.diameter = 'Yêu cầu nhập đường kính';
     else if (isNaN(dVal) || dVal <= 0 || dVal > 1000) newErrors.diameter = '0 < D ≤ 1000 mm';
 
-    if (life.trim() && (isNaN(lVal) || lVal <= 0 || lVal > 100000)) newErrors.life = '0 < L ≤ 100,000';
     if (t1.trim() && (isNaN(t1Val) || t1Val < 0 || t1Val > 100)) newErrors.t1 = '0-100%';
     if (t2.trim() && (isNaN(t2Val) || t2Val < 0 || t2Val > 100)) newErrors.t2 = '0-100%';
+    if (!uh.trim() || isNaN(uhVal) || uhVal <= 0) newErrors.uh = 'uh phải > 0';
+    if (!tmmRatio.trim() || isNaN(tmmVal) || tmmVal <= 0) newErrors.tmmRatio = 'Tmm/T1 phải > 0';
     
     if (t1.trim() && t2.trim() && (t1Val + t2Val > 100)) {
        newErrors.t1 = 'Tổng % > 100';
@@ -80,30 +86,19 @@ const InputScreen = ({ navigation }: any) => {
         T2_ratio = T2Num / T1Num;
       }
 
-      const { DesignFacade } = await import('../../business/DesignFacade');
-      const facade = new DesignFacade();
-      console.log("Calling performFullDesign with:", {
+      const result = await calculateApi.calculate({
         F: Number(force),
         v: Number(velocity),
         D: Number(diameter),
-        L: life ? Number(life) : undefined,
-        t1: t1Num,
-        T1_ratio: T1_ratio,
-        t2: t2Num,
-        T2_ratio: T2_ratio,
-      });
-      const result = await facade.performFullDesign({
-        F: Number(force),
-        v: Number(velocity),
-        D: Number(diameter),
-        L: life ? Number(life) : undefined,
-        t1: t1Num,
-        T1_ratio: T1_ratio,
-        t2: t2Num,
-        T2_ratio: T2_ratio,
+        t1: t1Num ?? 20,
+        T1_ratio: T1_ratio ?? 1,
+        t2: t2Num ?? 80,
+        T2_ratio: T2_ratio ?? 0.65,
+        uh: Number(uh),
+        gearbox_type: gearboxType,
+        tmm_t1_ratio: Number(tmmRatio),
       });
 
-      console.log("Calculation successful:", !!result);
       setLoading(false);
       navigation.navigate('Result', {
         resultData: result,
@@ -167,15 +162,6 @@ const InputScreen = ({ navigation }: any) => {
               style={{ paddingBottom: Spacing.sm }}
             />
 
-            <CustomInput
-              label="Tuổi thọ/Thời gian phục vụ L (giờ)"
-              value={life}
-              onChangeText={setLife}
-              placeholder="e.g. 20000"
-              keyboardType="numeric"
-              style={{ paddingBottom: Spacing.sm }}
-            />
-
             {/* Load change over time (t1, T1 / t2, T2) */}
             <Text style={styles.sectionTitle}>
               Chế độ tải thay đổi theo thời gian
@@ -201,6 +187,46 @@ const InputScreen = ({ navigation }: any) => {
                   keyboardType="numeric"
                 />
               </View>
+            </View>
+
+            <CustomInput
+              label="Tỷ số truyền hộp giảm tốc uh"
+              value={uh}
+              onChangeText={setUh}
+              placeholder="e.g. 12.5"
+              keyboardType="numeric"
+              error={errors.uh}
+              style={{ paddingBottom: Spacing.sm }}
+            />
+
+            <CustomInput
+              label="Tỷ số quá tải yêu cầu Tmm/T1"
+              value={tmmRatio}
+              onChangeText={setTmmRatio}
+              placeholder="e.g. 1.6"
+              keyboardType="numeric"
+              error={errors.tmmRatio}
+              style={{ paddingBottom: Spacing.sm }}
+            />
+
+            <Text style={styles.sectionTitle}>Loại hộp giảm tốc (HGT)</Text>
+            <View style={styles.toggleRow}>
+              <TouchableOpacity
+                style={[styles.toggleButton, gearboxType === 'KHAI_TRIEN' && styles.toggleButtonActive]}
+                onPress={() => setGearboxType('KHAI_TRIEN')}
+              >
+                <Text style={[styles.toggleText, gearboxType === 'KHAI_TRIEN' && styles.toggleTextActive]}>
+                  KHAI_TRIEN
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.toggleButton, gearboxType === 'PHAN_DOI' && styles.toggleButtonActive]}
+                onPress={() => setGearboxType('PHAN_DOI')}
+              >
+                <Text style={[styles.toggleText, gearboxType === 'PHAN_DOI' && styles.toggleTextActive]}>
+                  PHAN_DOI
+                </Text>
+              </TouchableOpacity>
             </View>
 
             <View style={styles.row}>
@@ -309,6 +335,32 @@ const styles = StyleSheet.create({
   },
   spacer: {
     width: Spacing.md,
+  },
+  toggleRow: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+    marginBottom: Spacing.md,
+  },
+  toggleButton: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: BorderRadius.md,
+    paddingVertical: Spacing.md,
+    alignItems: 'center',
+    backgroundColor: Colors.surfaceLight,
+  },
+  toggleButtonActive: {
+    borderColor: Colors.primary,
+    backgroundColor: Colors.primary + '15',
+  },
+  toggleText: {
+    color: Colors.textSecondary,
+    fontWeight: '600',
+    fontSize: 13,
+  },
+  toggleTextActive: {
+    color: Colors.primary,
   },
 
   // Bottom Banner

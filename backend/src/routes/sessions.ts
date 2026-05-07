@@ -1,4 +1,5 @@
 import { Router, Response } from "express";
+import { Prisma } from "@prisma/client";
 import { prisma } from "../lib/prisma";
 import { authMiddleware, AuthRequest } from "../middleware/auth";
 import { createSessionSchema } from "../validators/schemas";
@@ -82,20 +83,14 @@ router.get("/:id", async (req: AuthRequest, res: Response): Promise<void> => {
 
 /**
  * POST /api/sessions
- * Tạo phiên tính toán mới (gộp Input + Result trong 1 request)
+ * Tạo phiên tính toán mới (chỉ lưu trữ Input + Result)
  * 
  * Body mẫu:
  * {
  *   "session_name": "Băng tải 1 - Lực 5000N",
- *   "input": { "force_f": 5000, "velocity_v": 1.2, "diameter_d": 300 },
- *   "result": {
- *     "equivalent_power": 6.0,
- *     "total_efficiency": 0.85,
- *     "shafts": [
- *       { "shaft_order": 1, "power_p": 5.1, "speed_n": 1450, "torque_t": 33580 },
- *       { "shaft_order": 2, "power_p": 4.9, "speed_n": 362, "torque_t": 129300 }
- *     ]
- *   }
+ *   "input": { "F": 5000, "v": 1.2, "D": 300, "t1": 60, "t2": 40, "T1_ratio": 1, "T2_ratio": 0.65, "uh": 10, "gearbox_type": "KHAI_TRIEN", "tmm_t1_ratio": 1.4 },
+ *   "result": { "Plv": 6.0, "Ptd": 6.5, "eta": 0.85, "Pct": 7.65, "nlv": 76.4, "usb": 25, "nsb": 1910 }
+ * }
  * }
  */
 router.post("/", async (req: AuthRequest, res: Response): Promise<void> => {
@@ -112,53 +107,14 @@ router.post("/", async (req: AuthRequest, res: Response): Promise<void> => {
 
     const { session_name, input, result } = parsed.data;
 
-    // 2. Tạo session với nested create (tất cả trong 1 transaction)
+    // 2. Tạo session và lưu JSON input/result
     const session = await prisma.calculationSession.create({
       data: {
         session_name,
         user_id: req.user!.userId,
         is_synced: true,
-
-        // Tạo bản ghi DesignInput nếu có
-        ...(input && {
-          design_inputs: {
-            create: input,
-          },
-        }),
-
-        // Tạo bản ghi DesignResult + các bảng con nếu có
-        ...(result && {
-          design_results: {
-            create: {
-              equivalent_power: result.equivalent_power,
-              total_efficiency: result.total_efficiency,
-              required_power_pct: result.required_power_pct,
-              total_ratio_ut: result.total_ratio_ut,
-              u1_ratio: result.u1_ratio,
-              u2_ratio: result.u2_ratio,
-
-              // Nested: Tạo các trục
-              ...(result.shafts && {
-                shafts: { create: result.shafts },
-              }),
-
-              // Nested: Tạo ổ lăn
-              ...(result.bearings && {
-                bearings: { create: result.bearings },
-              }),
-
-              // Nested: Tạo bánh răng
-              ...(result.gear_drives && {
-                gear_drives: { create: result.gear_drives },
-              }),
-
-              // Nested: Tạo vỏ hộp
-              ...(result.housings && {
-                housings: { create: result.housings },
-              }),
-            },
-          },
-        }),
+        input_json: input as Prisma.InputJsonValue,
+        result_json: result as Prisma.InputJsonValue,
       },
       include: {
         design_inputs: true,

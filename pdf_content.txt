@@ -1,0 +1,530 @@
+=== PAGE 1 ===
+CHƯƠNG 2: TÍNH TOÁN VÀ PHÂN PHỐI TỶ SỐ TRUYỀN
+Chọn động cơ điện
+Thỏa 3 yếu tố
+(1) Điều kiện công suất:   Pdc≥Pc t 
+(2) Điều kiện tốc độ:  ndc≈nsb 
+(3) Điều kiện quá tải:  
+T k
+T dn
+≥T mm
+T 1  
+Trong đó:
+Pđ c: công suất định mức động cơ
+Pct: công suất cần thiết
+nsb: số vòng quay sơ bộ
+T k: mômen khởi động
+T dn: mômen định mức
+T mm: mômen mở máy yêu cầu
+T lv: mômen làm việc
+(1)  
+-
+Công suất làm việc trên trục công tác
+Plv= F ×v
+1000  ( KW )
+(2.1
+)
+F: lực vòng trên băng tải
+v: vận tốc băng tải
+-
+ Công suất tương đương trên trục công tác
+Ptd=Plv×√
+∑
+1
+n
+(
+T i
+T )
+2
+×ti
+∑
+1
+n
+ti
+=Plv×√
+t1×(
+T 1
+T )
+2
++t2×(
+T 2
+T )
+2
+t1+t2
+(k W )
+(2.2)
+t1;t2: Thời gian làm việc
+T 1=T ;T 2=0.65T: Momen xoắn trên trục công tác
+Plv: Công suất làm việc trên trục công tác
+
+
+=== PAGE 2 ===
+-
+ Hiệu suất truyền động của hệ thống
+η=ηx×ηbr
+2 ×ηol
+4 ×ηkn
+(2.3)
+ηx: hiệu suất bộ truyền xích 
+ 
+ηbr: hiệu suất bộ truyền bánh răng 
+ηol: hiệu suất một cặp ổ lăn 
+ηkn: hiệu suất khớp nối trục đàn hồi
+-
+ Công suất cần thiết của động cơ
+Pct= Ptd
+η
+(kW )
+(2.4)
+Ptd : Công suất tương đương trên trục công tác
+η : Hiệu suất của hệ thống truyền động
+Từ đây tìm được yếu tố đầu tiên để chọn động cơ 
+(2) Xác định số vòng quay sơ bộ của động cơ
+-
+Số vòng quay của trục công tác
+nlv=60000×v
+π × D
+(vòng/ phút )
+(2.5)
+v(m/s): Vận tốc băng tải
+D(mm): Đường kính trục tang 
+-
+Tỉ số truyền sơ bộ của hệ thống truyền động
+usb=uxích×uhộp
+(2.6)
+uxích: Tỉ số truyền động xích
+uhộp: Tỉ số truyền động bánh răng trụ trong hộp giảm tốc 2 cấp
+-
+ Số vòng quay sơ bộ của động cơ
+nsb=nlv×usb (vòng/ phút )
+(2.7)
+Từ đây sẽ biết là nên chọn động cơ nào
+Dựa theo bảng phụ lục P1.2 – 235 sẽ chọn được dộng cơ phù hợp 
+Ví dụ: 
+ và 
+(vòng / phút)
+Sẽ chọn DK.62-4
+
+
+=== PAGE 3 ===
+Khi chọn động cơ thì bạn sẽ có ít nhất 1 động cơ thỏa và khi đó tùy vào yêu cầu và giá 
+thành để chọn yêu cầu phù hợp
+
+
+=== PAGE 4 ===
+Sau khi chọn được động cơ, sẽ phân phối lại tỉ số truyền cho hệ thống
+-
+ Xác định tỉ số truyền của hệ dẫn động
+ut=nđc
+nlv
+(2.8)
+nđc(vòng/ phút ): Số vòng quay của động cơ đã chọn
+nlv(vòng/ phút ): Số vòng quay của trục công tác
+-
+Phân tỉ số truyền của hệ dẫn động cho các bộ truyền
+ut=un×uh
+(2.9)
+uh: Tỉ số truyền của hộp (chọn theo bảng 3.1- 43 )
+ từ đó được giá trị u1, u2
+ut: Tỉ số truyền của hệ dẫn động
+un: Tỉ số truyền của các bộ truyền ngoài (trong trường hợp này un=ux)
+Kết quả tính được:
+ux= ut
+uh
+=
+ut
+u1×u2
+Từ đó sẽ có 5 loại u:
+ut: Tỉ số truyền của hệ dẫn động
+ux: Tỉ số truyền của bộ truyền xích
+uh: Tỉ số truyền của hộp (chọn theo bảng 3.1 - 43)
+u1: Tỉ số truyền cấp nhanh của hộp (chọn theo bảng 3.1- 43; HGT khai triển)
+
+
+=== PAGE 5 ===
+u2: Tỉ số truyền cấp chậm của hộp (chọn theo bảng 3.1- 43 ; HGT khai triển)
+Xác định công suất, số vòng quay và momen xoắn trên các trục
+-
+ Xác định công suất trên các trục và động cơ
+Cần biết 5 giá trị (đã tra và đã tính lúc đầu):
+Plv(kW ): Công suất trên trục công tác
+ηx: hiệu suất bộ truyền xích
+ηbr: hiệu suất bộ truyền bánh răng
+ηol: hiệu suất một cặp ổ lăn
+ηkn=1: hiệu suất khớp nối trục đàn hồi
+Công suất trên 3 trục: 
+
+
+=== PAGE 6 ===
+P3=
+Plv
+ηx×ηol
+(kW )
+P2=
+P3
+ηbr×ηol
+(kW )
+P1=
+P2
+ηbr×ηol
+(kW )
+Công suất thực của động cơ:
+Pđc'=
+P1
+ηkn×ηol
+(kW )
+-
+Xác định số vòng quay trên các trục và động cơ
+ Cần biết 5 giá tị
+nđc:Số vòng quay của động cơ đã chọn
+u1: Tỉ số truyền cấp nhanh của hộp (chọn theo bảng 3.1, trang 43 [1])
+u2: Tỉ số truyền cấp chậm của hộp (chọn theo bảng 3.1, trang 43 [1])
+ux: Tỉ số truyền của bộ truyền xích
+ukn=1: Tỉ số truyền của khớp nối trục đàn hồi
+Số vòng quay trên các trục I, II, III:
+n1=nđc
+ukn
+(vòng/ phút )
+n2=n1
+u1
+(vòng/ phút )
+n3=n2
+u2
+(vòng/ phút )
+Số vòng quay trên trục công tác:
+nlv=n3
+ux
+(vòng/ phút )
+-
+Xác định momen xoắn trên các trục và động cơ
+Moment xoắn trên các trục được xác định theo công thức ở trang 49 [1]:
+T i=9,55×10
+6× Pi
+ni
+(2.10)
+Có 5 giá trị P tương ứng với 5 giá trị n:
+
+
+=== PAGE 7 ===
+P1−n1 
+P2−n2
+P3−n3
+Pđc'−nđc
+Plv−nlv
+Kết quả tính được:
+T 1=9,55×10
+6× P1
+n1
+( N .mm)
+T 2=9,55×10
+6× P2
+n2
+( N .mm)
+T 3=9,55×10
+6× P3
+n3
+( N .mm)
+T đc=9,55×10
+6×
+Pđ c
+'
+nđc
+( N .mm)
+T lv=9,55×10
+6× Plv
+nlv
+( N .mm)
+Sau khi tính toán xong toàn bộ, sẽ có được bảng số liệu động học và động lực học trên 
+các trục
+Bảng 1.2. Bảng số liệu động học và động lực học trên các trục.
+Thông số
+Trục
+động cơ
+Trục 1
+Trục 2
+Trục 3
+Trục
+công tác
+P (kW)
+Pđc'
+P1
+P2
+P3
+Plv
+u
+1
+u1
+u2
+u3
+n 
+(vòng/phút
+)
+nđc
+n1
+n2
+n3
+nlv
+T (N.mm)
+T đc
+T 1
+T 2
+T 3
+T lv
+
+
+=== PAGE 8 ===
+CHƯƠNG 3: TÍNH TOÁN VÀ THIẾT KẾ BỘ TRUYỀN XÍCH
+3.1 Chọn và tìm hiểu loại xích 
+Loại xích: Chọn xích ống con lăn một dãy vì tính phổ biến và hiệu suất truyền động tốt 
+trong công nghiệp
+3. 2 Xác định các thông số của xích
+Để tính toán thiết kế bộ truyền xích, cần sử dụng các thông số đầu vào.
+• P: Công suất cần truyền (trên trục III)
+• ux  :Tỷ số truyền bộ truyền xích
+• n1 : Số vòng quay đĩa dẫn
+• T3: Mô-men xoắn trên trục III
+-
+Chọn số răng đĩa xích (dựa theo bảng 5.4 – 80)
+Số răng đĩa nhỏ: z1=29−2×ux   =>  Tìm được giá trị z1 
+Số răng đĩa lớn: z2=z1×ux. => Tìm được giá trị z2
+ 
+-
+Xác định bước xích
+Để xác định bước xích, cần tính công suất tính toán (Pt) qua các hệ số hiệu chỉnh
+Xác định hệ số sử dụng k: 
+k=k0×ka×kđc×kbt×kd×kc
+(3.1)
+k0: Hệ số kể đến ảnh hưởng của vị trí bộ truyền (đường nối 2 tâm đĩa xích so với 
+đường nằm ngang )
+ka: Hệ số kể đến khoảng cách trục và chiều dài xích (chọn a=40× p)
+kđc: Hệ số kể đến ảnh hưởng của việc có thể điều chỉnh được lực căng xích
+kbt: Hệ số kể đến ảnh hưởng của bôi trơn
+
+
+=== PAGE 9 ===
+kđ: Hệ số tải trọng động, kể đến tính chất của tải trọng 
+kc: Hệ số kể đến chế độ làm việc của bộ truyền 
+ Xác định hệ số răng k z:
+k z= z01
+z1
+(3.2)
+z01: Số răng đĩa xích nhỏ thí nghiệm (chọn theo bảng 5.5 - 81 )
+z1: Số răng đĩa xích nhỏ
+Xác định hệ số vòng quay kn:
+kn=n01
+n1
+(3.3)
+n01: Số vòng quay đĩa nhỏ thí nghiệm (chọn theo bảng 5.5 – 81 )
+n1: Số vòng quay đĩa nhỏ
+Xác định công suất tính toán (theo công thức 5.3 - 81):
+  Pt=P×k ×k z×kn≤[P ]
+(3.4)
+P: Công suất cần truyền (công suất trên trục 3)
+k: Hệ số điều kiện sử dụng
+k z: Hệ số răng
+kn: Hệ số vòng quay
+[P]: công suất cho phép
+Xác định bước xích:
+Dựa theo bảng 5.5 -  81: với n01 và Pt để bộ truyền xích thỏa mãn điều kiện bền mòn 
+Pt ≤[P ]. Sẽ chọn được bước xích có giá trị p
+Dựa theo bảng 5.8 - 83 với bước xích p thì tốc độ vòng quay đĩa nhỏ tối đa cho phép là 
+n1max.Nên thỏa mãn điều kiện để hạn chế ảnh hưởng có hại của va đập đối với bộ truyền. 
+Vậy sẽ có bước xích p, đường kính chốt dc, và chiều dài ống B.
+
+
+=== PAGE 10 ===
+-
+Xác định khoảng cách trục, số mắt xích, số lần va đập
+Xác định khoảng cách trục, số mắt xích
+Khi ka=1, chọn khoảng cách trục:  a=40× p
+Số mắt xích:
+x=2a
+p + z1+z2
+2
++
+(z2−z1)
+2× p
+4 π
+2×a
+(3.5)
+a: Khoảng cách trục
+p: Bước xích
+z1: Số răng đĩa xích nhỏ
+
+
+=== PAGE 11 ===
+z2: Số răng đĩa xích lớn
+Kết quả tính được xc (số mắt xích phải là số chẵn, do đó phải làm tròn về số chẵn 
+gần nhất)
+Khoảng cách trục a (theo công thức 5.13 – 85):
+a
+¿=0,25× p× \{ xc−0,5×(z2+z1)+√[xc−0,5(z2+z1)]
+2−2[(z2−z1) / π ]
+2 \}
+(3.6)
+p: Bước xích
+xc: Số mắc xích
+z1: Số răng đĩa xích nhỏ
+z2: Số răng đĩa xích lớn
+Để xích không chịu lực căng quá lớn khoảng cách trục a tính cần được giảm bớt một 
+lượng: 
+Δa=0,002×a
+¿(mm)
+Vậy khoảng cách trục a là:
+a=a
+¿−Δa(mm)
+Xác định số lần va đập trong 1 giây (dựa theo công thức 5.14 – 85)
+i= z1×n1
+15× x ≤[i]
+(3.7)
+z1: Số răng đĩa xích nhỏ
+n1: Số vòng quay đĩa nhỏ
+xc: Số mắc xích
+3.3Tính kiểm nghiệm xích về độ bền
+Vận tốc trung bình của xích:
+v= z1× p×n1
+60000
+(3.8)
+z1: Số răng đĩa xích nhỏ
+p: Bước xích
+n1: Số vòng quay đĩa nhỏ
+
+
+=== PAGE 12 ===
+Lực vòng:
+Ft=1000× P
+v
+(3.9)
+P: Công suất cần truyền (công suất trên trục 3)
+v: Vận tốc xích
+Lực căng do lực li tâm sinh ra:
+F v=q×v
+2
+(3.10)
+q: Khối lượng 1 mét xích
+v: Vận tốc xích
+Lực căng do trọng lượng nhánh xích bị động sinh ra:
+F0=9,81×k f ×q×a
+(3.11)
+kf  : hệ số phụ thuộc độ võng f của xích và vị trí bộ truyền 
+q: Khối lượng 1 mét xích 
+a: Khoảng cách trục a
+Kiểm nghiệm độ bền:
+s=
+Q
+kđ × Ft+Fo+Fv
+≥[s]
+(3.12)
+Q: Tải trọng phá hỏng (theo bảng 5.2, trang 78 [1])
+kđ: Hệ số tải trọng động, kể đến tính chất của tải trọng
+Ft: Lực vòng
+F v: Lực căng do lực li tâm sinh ra
+F0: Lực căng do trọng lượng nhánh xích bị động sinh ra
+[s]: Hệ số an toàn cho phép (theo bảng 5.10 – 86)
+Kết quả kiểm nghiệm cho thấy được bộ truyền xích an toàn, đảm bảo đủ điều kiện bền 
+hay không.
+
+
+=== PAGE 13 ===
+3. 4 Xác định thông số đĩa xích và lực tác dụng lên trục
+-
+Đường kính đĩa xích (dựa theo công thức 5.17 – 86 và bảng 5.4)
+Cần dựa vào các thông số sau:
+p: Bước xích
+z1: Số răng đĩa xích nhỏ
+z2: Số răng đĩa xích lớn
+dl: đường kính con lăn của xích 
+Đường kính vòng chia của đĩa xích dẫn và bị dẫn:
+d1=
+p
+sin(
+π
+z1)
+d2=
+p
+sin(
+π
+z2)
+(3.13)
+Đường kính vòng đỉnh của đĩa xích dẫn và bị dẫn:
+da1=p×[0,5+cot(
+π
+z1)]
+da2=p×[0,5+cot(
+π
+z1)]
+(3.14)
+Bán kính đáy răng:
+r=0,5025×dl+0,05
+(3.15)
+Đường kính vòng chân răng của đĩa xích dẫn và bị dẫn:
+
+
+=== PAGE 14 ===
+df 1=d1−2×rdf 2=d2−2×r
+(3.16)
+-
+ Kiểm nghiệm độ bền tiếp xúc và chọn vật liệu cho bộ truyền xích
+Lực va đập m trên dãy xích:
+Fvđ=13⋅10
+−7×n1× p
+3×m
+(3.17)
+n1: Số vòng quay đĩa nhỏ
+p: Bước xích
+m: Số dãy xích
+Kiểm nghiệm độ bền tiếp xúc của đĩa xích:
+σ H=0,47×√
+kr×(Ft× K d+Fvđ )× E
+A ×kd
+≤[σ H ]
+(3.18)
+kr1: Hệ số kể đến ảnh hưởng của số răng đĩa xích, phụ thuộc z (z1=23 ) 
+kr2: Hệ số kể đến ảnh hưởng của số răng đĩa xích, phụ thuộc z (z2=69 )
+Ft: Lực vòng
+K đ: Hệ số tải trọng động, kể đến tính chất của tải trọng
+Fvd: Lực va đập m trên dãy xích
+E: Module đàn hồi
+A: Diện tích chiếu của bản lề (theo bảng 5.12, trang 87 [1])
+kd: hệ số phân bố không đều cho các dãy (xích 1 dãy)
+[σ H ]: ứng suất tiếp xúc cho phép (theo bảng 5.11, trang 86 [1])
+Vậy dùng Gang xám – Tôi, ram: σ H 1<[σ H] thì đảm bảo được độ bền tiếp xúc cho răng đĩa 
+1. 
+Tương tự, σ H 2<[σ H ] với cùng vật liệu và nhiệt luyện. 
+-
+Xác định lực tác dụng lên trục:
+Fr=k x× Ft
+k x: Hệ số kể đến trọng lượng của xích lên trục, bộ truyền nằm ngang
+Ft: Lực vòng
+-
+Bảng thông số bộ truyền xích
+Bảng 3.2. Thông số bộ truyền xích
+
+
+=== PAGE 15 ===
+Thông số
+Giá 
+trị
+Số bánh răng dẫn
+z1
+Số bánh răng bị dẫn
+z2
+Bước xích (mm)
+p
+Chiều dài ống lót (mm)
+B
+Đường kính chốt (mm)
+dc
+Số mắt xích
+xc
+Khoảng cách trục (mm)
+a
+Đường kính vòng chia đĩa dẫn (mm)
+d1
+Đường kính vòng chia đĩa bị dẫn 
+(mm)
+d2
+Lực tác dụng lên trục (N)
+Fr
+
+

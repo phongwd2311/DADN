@@ -1,0 +1,1 @@
+{"version":3,"file":"gearbox.d.ts","sourceRoot":"","sources":["../../src/constants/gearbox.ts"],"names":[],"mappings":"AAAA,MAAM,MAAM,WAAW,GAAG,YAAY,GAAG,UAAU,CAAC;AAEpD,eAAO,MAAM,SAAS,MAAM,CAAC;AAE7B,eAAO,MAAM,qBAAqB,EAAE,MAAM,CAAC,WAAW,EAAE;IAAE,QAAQ,EAAE,MAAM,EAAE,CAAC;IAAC,QAAQ,EAAE,MAAM,EAAE,CAAA;CAAE,CASjG,CAAC"}

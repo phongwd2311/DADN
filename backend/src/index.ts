@@ -5,6 +5,7 @@ import cors from "cors";
 import authRoutes from "./routes/auth";
 import sessionRoutes from "./routes/sessions";
 import motorRoutes from "./routes/motors";
+import calculateRoutes from "./routes/calculate";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -17,6 +18,7 @@ app.use(express.json());
 app.use("/api/auth", authRoutes);
 app.use("/api/sessions", sessionRoutes);
 app.use("/api/motors", motorRoutes);
+app.use("/api/calculate", calculateRoutes);
 
 // Health check
 app.get("/api/health", (_req, res) => {
