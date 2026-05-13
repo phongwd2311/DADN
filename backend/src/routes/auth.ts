@@ -1,10 +1,21 @@
 import { Router, Request, Response } from "express";
 import bcrypt from "bcryptjs";
+import { createHash, randomBytes } from "crypto";
 import { prisma } from "../lib/prisma";
 import { generateToken, authMiddleware, AuthRequest } from "../middleware/auth";
-import { registerSchema, loginSchema } from "../validators/schemas";
+import {
+  registerSchema,
+  loginSchema,
+  forgotPasswordSchema,
+  resetPasswordSchema,
+} from "../validators/schemas";
 
 const router = Router();
+
+const LOGIN_ERROR_MESSAGE = "Email hoặc mật khẩu không chính xác";
+const FORGOT_PASSWORD_GENERIC_MESSAGE =
+  "Nếu email tồn tại, hệ thống đã gửi hướng dẫn đặt lại mật khẩu";
+const RESET_TOKEN_TTL_MS = 15 * 60 * 1000;
 
 /**
  * POST /api/auth/register
@@ -12,7 +23,6 @@ const router = Router();
  */
 router.post("/register", async (req: Request, res: Response): Promise<void> => {
   try {
-    // 1. Validate input
     const parsed = registerSchema.safeParse(req.body);
     if (!parsed.success) {
       res.status(400).json({
@@ -24,7 +34,6 @@ router.post("/register", async (req: Request, res: Response): Promise<void> => {
 
     const { username, email, password } = parsed.data;
 
-    // 2. Kiểm tra email/username đã tồn tại chưa
     const existing = await prisma.user.findFirst({
       where: {
         OR: [{ email }, { username }],
@@ -33,20 +42,19 @@ router.post("/register", async (req: Request, res: Response): Promise<void> => {
 
     if (existing) {
       res.status(409).json({
-        error: existing.email === email
-          ? "Email đã được sử dụng"
-          : "Username đã được sử dụng",
+        error:
+          existing.email === email
+            ? "Email đã được sử dụng"
+            : "Username đã được sử dụng",
       });
       return;
     }
 
-    // 3. Hash password và tạo user
     const password_hash = await bcrypt.hash(password, 12);
     const user = await prisma.user.create({
       data: { username, email, password_hash },
     });
 
-    // 4. Tạo token và trả về
     const token = generateToken(user.user_id, user.email);
 
     res.status(201).json({
@@ -60,11 +68,11 @@ router.post("/register", async (req: Request, res: Response): Promise<void> => {
       },
     });
   } catch (err: any) {
-    console.error("DEBUG - Register Error Details:", err);
-    res.status(500).json({ 
-      error: "Lỗi server chi tiết", 
+    console.error("Register error:", err);
+    res.status(500).json({
+      error: "Lỗi server chi tiết",
       message: err.message,
-      stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
+      stack: process.env.NODE_ENV === "development" ? err.stack : undefined,
     });
   }
 });
@@ -75,8 +83,23 @@ router.post("/register", async (req: Request, res: Response): Promise<void> => {
  */
 router.post("/login", async (req: Request, res: Response): Promise<void> => {
   try {
-    // 1. Validate input
-    const parsed = loginSchema.safeParse(req.body);
+    const { email, password } = req.body ?? {};
+    if (
+      typeof email !== "string" ||
+      email.trim() === "" ||
+      typeof password !== "string" ||
+      password.trim() === ""
+    ) {
+      res.status(400).json({
+        error: "Vui lòng nhập đầy đủ Email và Mật khẩu",
+      });
+      return;
+    }
+
+    const parsed = loginSchema.safeParse({
+      email: email.trim(),
+      password,
+    });
     if (!parsed.success) {
       res.status(400).json({
         error: "Dữ liệu không hợp lệ",
@@ -85,22 +108,20 @@ router.post("/login", async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    const { email, password } = parsed.data;
-
-    // 2. Tìm user theo email
-    const user = await prisma.user.findUnique({ where: { email } });
+    const user = await prisma.user.findUnique({
+      where: { email: parsed.data.email },
+    });
     if (!user) {
-      res.status(401).json({ error: "Email hoặc mật khẩu không đúng" });
-      return;
-    }
-    // 3. So sánh password
-    const isValid = await bcrypt.compare(password, user.password_hash);
-    if (!isValid) {
-      res.status(401).json({ error: "Email hoặc mật khẩu không đúng" });
+      res.status(401).json({ error: LOGIN_ERROR_MESSAGE });
       return;
     }
 
-    // 4. Tạo token
+    const isValid = await bcrypt.compare(parsed.data.password, user.password_hash);
+    if (!isValid) {
+      res.status(401).json({ error: LOGIN_ERROR_MESSAGE });
+      return;
+    }
+
     const token = generateToken(user.user_id, user.email);
 
     res.json({
@@ -115,6 +136,140 @@ router.post("/login", async (req: Request, res: Response): Promise<void> => {
     });
   } catch (err) {
     console.error("Login error:", err);
+    res.status(500).json({ error: "Lỗi server" });
+  }
+});
+
+/**
+ * POST /api/auth/logout
+ * Đăng xuất (revoke token hiện tại)
+ */
+router.post("/logout", authMiddleware, async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const jti = req.user?.jti;
+    const exp = req.user?.exp;
+
+    if (!jti || !exp) {
+      res.status(401).json({ error: "Token không hợp lệ hoặc đã hết hạn." });
+      return;
+    }
+
+    await prisma.revokedToken.upsert({
+      where: { jti },
+      create: {
+        jti,
+        expires_at: new Date(exp * 1000),
+      },
+      update: {
+        expires_at: new Date(exp * 1000),
+        revoked_at: new Date(),
+      },
+    });
+
+    res.json({ message: "Đăng xuất thành công" });
+  } catch (err) {
+    console.error("Logout error:", err);
+    res.status(500).json({ error: "Lỗi server" });
+  }
+});
+
+/**
+ * POST /api/auth/forgot-password
+ * Tạo token đặt lại mật khẩu
+ */
+router.post("/forgot-password", async (req: Request, res: Response): Promise<void> => {
+  try {
+    const parsed = forgotPasswordSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({
+        error: "Dữ liệu không hợp lệ",
+        details: parsed.error.flatten().fieldErrors,
+      });
+      return;
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { email: parsed.data.email },
+      select: { user_id: true },
+    });
+
+    let resetToken: string | null = null;
+
+    if (user) {
+      resetToken = randomBytes(32).toString("hex");
+      const tokenHash = createHash("sha256").update(resetToken).digest("hex");
+
+      await prisma.passwordResetToken.create({
+        data: {
+          user_id: user.user_id,
+          token_hash: tokenHash,
+          expires_at: new Date(Date.now() + RESET_TOKEN_TTL_MS),
+        },
+      });
+    }
+
+    res.json({
+      message: FORGOT_PASSWORD_GENERIC_MESSAGE,
+      ...(process.env.NODE_ENV !== "production" && resetToken
+        ? { reset_token: resetToken }
+        : {}),
+    });
+  } catch (err) {
+    console.error("Forgot password error:", err);
+    res.status(500).json({ error: "Lỗi server" });
+  }
+});
+
+/**
+ * POST /api/auth/reset-password
+ * Đặt lại mật khẩu bằng reset token
+ */
+router.post("/reset-password", async (req: Request, res: Response): Promise<void> => {
+  try {
+    const parsed = resetPasswordSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({
+        error: "Dữ liệu không hợp lệ",
+        details: parsed.error.flatten().fieldErrors,
+      });
+      return;
+    }
+
+    const tokenHash = createHash("sha256").update(parsed.data.token).digest("hex");
+
+    const resetRecord = await prisma.passwordResetToken.findUnique({
+      where: { token_hash: tokenHash },
+      select: {
+        id: true,
+        user_id: true,
+        expires_at: true,
+        used_at: true,
+      },
+    });
+
+    if (!resetRecord || resetRecord.used_at || resetRecord.expires_at <= new Date()) {
+      res.status(400).json({
+        error: "Token đặt lại mật khẩu không hợp lệ hoặc đã hết hạn",
+      });
+      return;
+    }
+
+    const passwordHash = await bcrypt.hash(parsed.data.newPassword, 12);
+
+    await prisma.$transaction([
+      prisma.user.update({
+        where: { user_id: resetRecord.user_id },
+        data: { password_hash: passwordHash },
+      }),
+      prisma.passwordResetToken.update({
+        where: { id: resetRecord.id },
+        data: { used_at: new Date() },
+      }),
+    ]);
+
+    res.json({ message: "Đặt lại mật khẩu thành công" });
+  } catch (err) {
+    console.error("Reset password error:", err);
     res.status(500).json({ error: "Lỗi server" });
   }
 });

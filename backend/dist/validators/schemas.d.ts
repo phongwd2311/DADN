@@ -8,7 +8,13 @@ export declare const loginSchema: z.ZodObject<{
     email: z.ZodString;
     password: z.ZodString;
 }, z.core.$strip>;
-/** Schema cho dữ liệu tính toán bắt buộc */
+export declare const forgotPasswordSchema: z.ZodObject<{
+    email: z.ZodString;
+}, z.core.$strip>;
+export declare const resetPasswordSchema: z.ZodObject<{
+    token: z.ZodString;
+    newPassword: z.ZodString;
+}, z.core.$strip>;
 export declare const calculateSchema: z.ZodObject<{
     F: z.ZodNumber;
     v: z.ZodNumber;
@@ -22,9 +28,18 @@ export declare const calculateSchema: z.ZodObject<{
         KHAI_TRIEN: "KHAI_TRIEN";
         PHAN_DOI: "PHAN_DOI";
     }>;
+    external_drive_type: z.ZodOptional<z.ZodEnum<{
+        CHAIN: "CHAIN";
+        BELT: "BELT";
+        GEAR: "GEAR";
+        NONE: "NONE";
+    }>>;
+    chain_layout: z.ZodOptional<z.ZodEnum<{
+        HORIZONTAL_OR_LT40: "HORIZONTAL_OR_LT40";
+        STEEP_GT40: "STEEP_GT40";
+    }>>;
     tmm_t1_ratio: z.ZodNumber;
 }, z.core.$strip>;
-/** Schema tạo phiên tính toán (lưu JSON input + result) */
 export declare const createSessionSchema: z.ZodObject<{
     session_name: z.ZodString;
     input: z.ZodObject<{
@@ -40,6 +55,16 @@ export declare const createSessionSchema: z.ZodObject<{
             KHAI_TRIEN: "KHAI_TRIEN";
             PHAN_DOI: "PHAN_DOI";
         }>;
+        external_drive_type: z.ZodOptional<z.ZodEnum<{
+            CHAIN: "CHAIN";
+            BELT: "BELT";
+            GEAR: "GEAR";
+            NONE: "NONE";
+        }>>;
+        chain_layout: z.ZodOptional<z.ZodEnum<{
+            HORIZONTAL_OR_LT40: "HORIZONTAL_OR_LT40";
+            STEEP_GT40: "STEEP_GT40";
+        }>>;
         tmm_t1_ratio: z.ZodNumber;
     }, z.core.$loose>;
     result: z.ZodObject<{
@@ -54,5 +79,7 @@ export declare const createSessionSchema: z.ZodObject<{
 }, z.core.$strip>;
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
+export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
+export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
 export type CreateSessionInput = z.infer<typeof createSessionSchema>;
 //# sourceMappingURL=schemas.d.ts.map

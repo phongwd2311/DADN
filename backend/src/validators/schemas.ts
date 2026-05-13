@@ -2,6 +2,12 @@ import { z } from "zod";
 
 // ==================== AUTH ====================
 
+const passwordSchema = z
+  .string()
+  .min(8, "Mật khẩu không phù hợp")
+  .max(20, "Mật khẩu không phù hợp")
+  .regex(/^(?=.*[A-Za-z])(?=.*\d).+$/, "Mật khẩu không phù hợp");
+
 export const registerSchema = z.object({
   username: z
     .string()
@@ -11,10 +17,7 @@ export const registerSchema = z.object({
     .string()
     .email("Email không hợp lệ")
     .max(100, "Email tối đa 100 ký tự"),
-  password: z
-    .string()
-    .min(6, "Mật khẩu phải có ít nhất 6 ký tự")
-    .max(100, "Mật khẩu tối đa 100 ký tự"),
+  password: passwordSchema,
 });
 
 export const loginSchema = z.object({
@@ -22,8 +25,17 @@ export const loginSchema = z.object({
   password: z.string().min(1, "Vui lòng nhập mật khẩu"),
 });
 
+export const forgotPasswordSchema = z.object({
+  email: z.string().email("Email không hợp lệ"),
+});
+
+export const resetPasswordSchema = z.object({
+  token: z.string().min(1, "Token không hợp lệ"),
+  newPassword: passwordSchema,
+});
+
 // ==================== SESSION ====================
-/** Schema cho dữ liệu tính toán bắt buộc */
+
 export const calculateSchema = z
   .object({
     F: z.number({ message: "Thiếu lực vòng F" }).positive("F phải > 0"),
@@ -37,6 +49,16 @@ export const calculateSchema = z
     gearbox_type: z.enum(["KHAI_TRIEN", "PHAN_DOI"] as const, {
       message: "Thiếu loại hộp giảm tốc",
     }),
+    external_drive_type: z
+      .enum(["CHAIN", "BELT", "GEAR", "NONE"] as const, {
+        message: "Loại bộ truyền ngoài không hợp lệ",
+      })
+      .optional(),
+    chain_layout: z
+      .enum(["HORIZONTAL_OR_LT40", "STEEP_GT40"] as const, {
+        message: "Cấu hình bộ truyền xích không hợp lệ",
+      })
+      .optional(),
     tmm_t1_ratio: z
       .number({ message: "Thiếu Tmm/T1" })
       .positive("Tmm/T1 phải > 0"),
@@ -46,10 +68,8 @@ export const calculateSchema = z
     path: ["t1"],
   });
 
-/** Schema cho input lưu trong session (cho phép thêm field phụ) */
 const sessionInputSchema = calculateSchema.passthrough();
 
-/** Schema cho result lưu trong session (cho phép thêm field phụ) */
 const sessionResultSchema = z
   .object({
     Plv: z.number({ message: "Thiếu Plv" }),
@@ -62,7 +82,6 @@ const sessionResultSchema = z
   })
   .passthrough();
 
-/** Schema tạo phiên tính toán (lưu JSON input + result) */
 export const createSessionSchema = z.object({
   session_name: z.string().min(1, "Tên phiên không được để trống").max(255),
   input: sessionInputSchema,
@@ -71,4 +90,6 @@ export const createSessionSchema = z.object({
 
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
+export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
+export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
 export type CreateSessionInput = z.infer<typeof createSessionSchema>;

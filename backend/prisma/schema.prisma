@@ -19,6 +19,7 @@ model User {
   join_date     DateTime? @default(now()) @db.Timestamp(6)
   
   sessions      CalculationSession[]
+  password_reset_tokens PasswordResetToken[]
 
   @@schema("public")
   @@map("users")
@@ -175,6 +176,29 @@ model AiSuggestion {
 
   @@schema("public")
   @@map("ai_suggestions")
+}
+
+model RevokedToken {
+  jti        String   @id @db.VarChar(191)
+  expires_at DateTime @db.Timestamp(6)
+  revoked_at DateTime @default(now()) @db.Timestamp(6)
+
+  @@schema("public")
+  @@map("revoked_tokens")
+}
+
+model PasswordResetToken {
+  id         Int       @id @default(autoincrement())
+  user_id    Int
+  token_hash String    @unique @db.VarChar(255)
+  expires_at DateTime  @db.Timestamp(6)
+  used_at    DateTime? @db.Timestamp(6)
+  created_at DateTime  @default(now()) @db.Timestamp(6)
+
+  user       User      @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
+
+  @@schema("public")
+  @@map("password_reset_tokens")
 }
 
 model schema_migrations {

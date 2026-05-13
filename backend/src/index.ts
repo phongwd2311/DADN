@@ -6,6 +6,8 @@ import authRoutes from "./routes/auth";
 import sessionRoutes from "./routes/sessions";
 import motorRoutes from "./routes/motors";
 import calculateRoutes from "./routes/calculate";
+import standardsRoutes from "./routes/standards";
+import reportRoutes from "./routes/report";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -19,6 +21,8 @@ app.use("/api/auth", authRoutes);
 app.use("/api/sessions", sessionRoutes);
 app.use("/api/motors", motorRoutes);
 app.use("/api/calculate", calculateRoutes);
+app.use("/api/standards", standardsRoutes);
+app.use("/api/report", reportRoutes);
 
 // Health check
 app.get("/api/health", (_req, res) => {
@@ -31,25 +35,24 @@ app.get("/api/health", (_req, res) => {
 
 // ==================== Start Server ====================
 app.listen(PORT, () => {
-  console.log(`
-  ╔══════════════════════════════════════════╗
-  ║     🚀 GearDrive API Server Running     ║
-  ║                                          ║
-  ║     http://localhost:${PORT}             ║
-  ║                                          ║
-  ║     Endpoints:                           ║
-  ║       POST /api/auth/register            ║
-  ║       POST /api/auth/login               ║
-  ║       GET  /api/auth/me                  ║
-  ║       GET  /api/sessions                 ║
-  ║       POST /api/sessions                 ║
-  ║       GET  /api/sessions/:id             ║
-  ║       DELETE /api/sessions/:id           ║
-  ║       GET  /api/motors                   ║
-  ║       GET  /api/motors/:id               ║
-  ║       GET  /api/health                   ║
-  ╚══════════════════════════════════════════╝
-  `);
+  console.log(`GearDrive API Server running at http://localhost:${PORT}`);
+  console.log("Available endpoints:");
+  console.log("  POST /api/auth/register");
+  console.log("  POST /api/auth/login");
+  console.log("  POST /api/auth/logout");
+  console.log("  POST /api/auth/forgot-password");
+  console.log("  POST /api/auth/reset-password");
+  console.log("  GET  /api/auth/me");
+  console.log("  GET  /api/sessions");
+  console.log("  POST /api/sessions");
+  console.log("  GET  /api/sessions/:id");
+  console.log("  DELETE /api/sessions/:id");
+  console.log("  GET  /api/motors");
+  console.log("  GET  /api/motors/:id");
+  console.log("  GET  /api/standards");
+  console.log("  GET  /api/standards/:tableKey");
+  console.log("  POST /api/report/preview");
+  console.log("  GET  /api/health");
 });
 
 export default app;

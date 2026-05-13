@@ -3,6 +3,8 @@ export interface AuthRequest extends Request {
     user?: {
         userId: number;
         email: string;
+        jti?: string;
+        exp?: number;
     };
 }
 /**
@@ -13,5 +15,5 @@ export declare function generateToken(userId: number, email: string): string;
  * Middleware: Kiểm tra JWT token từ header Authorization
  * Sử dụng: router.get('/protected', authMiddleware, handler)
  */
-export declare function authMiddleware(req: AuthRequest, res: Response, next: NextFunction): void;
+export declare function authMiddleware(req: AuthRequest, res: Response, next: NextFunction): Promise<void>;
 //# sourceMappingURL=auth.d.ts.map
