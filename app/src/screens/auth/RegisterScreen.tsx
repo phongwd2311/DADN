@@ -26,14 +26,17 @@ const RegisterScreen = ({ navigation }: any) => {
 
   const validate = () => {
     const newErrors: { fullName?: string; email?: string; password?: string; confirmPassword?: string } = {};
-    if (!fullName.trim()) newErrors.fullName = 'Full Name is required';
-    if (!email.trim()) newErrors.email = 'Email is required';
-    else if (!/\S+@\S+\.\S+/.test(email)) newErrors.email = 'Invalid email format';
+    if (!fullName.trim()) newErrors.fullName = 'Tên không được để trống';
+    else if (fullName.length < 3) newErrors.fullName = 'Tên phải chứa ít nhất 3 ký tự';
     
-    if (!password.trim()) newErrors.password = 'Password is required';
-    else if (password.length < 6) newErrors.password = 'Password must be at least 6 characters';
+    if (!email.trim()) newErrors.email = 'Email không được để trống';
+    else if (!/\S+@\S+\.\S+/.test(email)) newErrors.email = 'Định dạng email không hợp lệ';
     
-    if (password !== confirmPassword) newErrors.confirmPassword = 'Passwords do not match';
+    if (!password.trim()) newErrors.password = 'Mật khẩu không được để trống';
+    else if (password.length < 8) newErrors.password = 'Mật khẩu phải có ít nhất 8 ký tự';
+    else if (!/^(?=.*[A-Za-z])(?=.*\d).+$/.test(password)) newErrors.password = 'Mật khẩu phải chứa ít nhất 1 chữ cái và 1 chữ số';
+    
+    if (password !== confirmPassword) newErrors.confirmPassword = 'Mật khẩu xác nhận không khớp';
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -52,9 +55,20 @@ const RegisterScreen = ({ navigation }: any) => {
       await login(data.token, data.user);
     } catch (error: any) {
       console.log('Register error', error?.response?.data || error.message);
-      setErrors({ 
-        email: error?.response?.data?.error || 'Đăng ký thất bại. Vui lòng thử lại.' 
-      });
+      
+      const resData = error?.response?.data;
+      if (resData?.details) {
+        // Map backend validation errors to frontend
+        const beErrors: any = {};
+        if (resData.details.username) beErrors.fullName = resData.details.username[0];
+        if (resData.details.email) beErrors.email = resData.details.email[0];
+        if (resData.details.password) beErrors.password = resData.details.password[0];
+        setErrors(beErrors);
+      } else {
+        setErrors({ 
+          email: resData?.error || 'Đăng ký thất bại. Vui lòng thử lại.' 
+        });
+      }
     } finally {
       setLoading(false);
     }
