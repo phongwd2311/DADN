@@ -10,7 +10,8 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Typography, Spacing, BorderRadius, Shadows } from '../../utils/theme';
 import GlassCard from '../../components/GlassCard';
-import { LocalDb } from '../../data/localDb';
+import { HistoryRepository } from '../../data/historyRepository';
+import { Alert } from 'react-native';
 
 type FilterType = 'all' | 'week' | 'month';
 
@@ -25,9 +26,23 @@ const HistoryScreen = ({ navigation }: any) => {
 
   const loadHistory = async () => {
     setLoading(true);
-    const data = await LocalDb.getAll('history');
+    const data = await HistoryRepository.getAll();
     setHistory(data);
     setLoading(false);
+  };
+
+  const handleDelete = (id: string) => {
+    Alert.alert('Delete Session', 'Are you sure you want to delete this session?', [
+      { text: 'Cancel', style: 'cancel' },
+      { 
+        text: 'Delete', 
+        style: 'destructive',
+        onPress: async () => {
+          await HistoryRepository.delete(id);
+          loadHistory(); // reload
+        }
+      }
+    ]);
   };
 
   const formatDate = (timestamp: string) => {
@@ -105,7 +120,9 @@ const HistoryScreen = ({ navigation }: any) => {
               <Text style={styles.footerLabel}>  Pitch:</Text>
               <Text style={styles.footerValue}>{item.output.chainParams.pitch} mm</Text>
             </View>
-            <Ionicons name="chevron-forward" size={18} color={Colors.textMuted} />
+            <TouchableOpacity onPress={() => handleDelete(item.id)}>
+              <Ionicons name="trash-outline" size={18} color={Colors.error || 'red'} />
+            </TouchableOpacity>
           </View>
         </GlassCard>
       </TouchableOpacity>

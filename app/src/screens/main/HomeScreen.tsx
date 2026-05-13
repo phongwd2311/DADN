@@ -91,20 +91,20 @@ const HomeScreen = ({ navigation }: any) => {
             onPress={() => navigation.navigate('History')}
           />
           <FeatureCard
-            icon="cube"
-            title="Components"
-            subtitle="Motor & Chain [3]"
+            icon="document-text"
+            title="Tech Standards"
+            subtitle="View specs & data"
             iconBgColor={Colors.success + '20'}
             iconColor={Colors.success}
-            onPress={() => {}}
+            onPress={() => navigation.navigate('Standards')}
           />
           <FeatureCard
-            icon="bulb"
-            title="Expert System"
-            subtitle="AI Suggestions"
+            icon="hardware-chip"
+            title="Motors"
+            subtitle="Browse motor models"
             iconBgColor={Colors.warning + '20'}
             iconColor={Colors.warning}
-            onPress={() => {}}
+            onPress={() => navigation.navigate('Motors')}
           />
         </View>
 

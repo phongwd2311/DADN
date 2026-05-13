@@ -9,10 +9,18 @@ import { Colors } from '../utils/theme';
 import WelcomeScreen from '../screens/auth/WelcomeScreen';
 import LoginScreen from '../screens/auth/LoginScreen';
 import RegisterScreen from '../screens/auth/RegisterScreen';
+import ForgotPasswordScreen from '../screens/auth/ForgotPasswordScreen';
 
 // Main (tab) screens
 import HomeScreen from '../screens/main/HomeScreen';
 import ProfileScreen from '../screens/main/ProfileScreen';
+
+// Standards screens
+import StandardsScreen from '../screens/standards/StandardsScreen';
+import StandardDetailScreen from '../screens/standards/StandardDetailScreen';
+
+// Motors screen
+import MotorsScreen from '../screens/motors/MotorsScreen';
 
 // Calculator flow screens
 import InputScreen from '../screens/calculator/InputScreen';
@@ -106,12 +114,18 @@ const AppNavigator = () => {
         }}
       >
         {user ? (
-          <Stack.Screen name="Main" component={MainTabNavigator} />
+          <>
+            <Stack.Screen name="Main" component={MainTabNavigator} />
+            <Stack.Screen name="Standards" component={StandardsScreen} />
+            <Stack.Screen name="StandardDetail" component={StandardDetailScreen} />
+            <Stack.Screen name="Motors" component={MotorsScreen} />
+          </>
         ) : (
           <>
             <Stack.Screen name="Welcome" component={WelcomeScreen} />
             <Stack.Screen name="Login" component={LoginScreen} />
             <Stack.Screen name="Register" component={RegisterScreen} />
+            <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
           </>
         )}
       </Stack.Navigator>

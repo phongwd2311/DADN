@@ -70,12 +70,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logout = async () => {
-    if (Platform.OS === 'web') {
-      localStorage.removeItem(TOKEN_KEY);
-    } else {
-      await SecureStore.deleteItemAsync(TOKEN_KEY);
+    try {
+      if (user) {
+        await authApi.logout();
+      }
+    } catch (e) {
+      console.warn("Logout API failed, proceeding with local logout", e);
+    } finally {
+      if (Platform.OS === 'web') {
+        localStorage.removeItem(TOKEN_KEY);
+      } else {
+        await SecureStore.deleteItemAsync(TOKEN_KEY);
+      }
+      setUser(null);
     }
-    setUser(null);
   };
 
   return (

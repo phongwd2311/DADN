@@ -67,7 +67,5 @@ export const HistoryRepository = {
   /**
    * Lấy toàn bộ lịch sử tính toán
    */
-  getAll: async (): Promise<HistoryRecord[]> => {
-    return LocalDb.getAll('history');
-  },
+  getAll: async (): Promise<HistoryRecord[]> => { try { const response = await sessionApi.getAll(); return response.sessions.map((s: any) => ({ id: s.id.toString(), timestamp: s.created_at, input: { F: s.input_data?.force_f, v: s.input_data?.velocity_v, D: s.input_data?.diameter_d, L: s.input_data?.lifespan_l }, output: { motorPower: s.result_data?.equivalent_power || 0, transmissionRatio: s.result_data?.total_ratio_ut || 0, chainParams: { pitch: 0 } } })); } catch (e) { return LocalDb.getAll('history'); } }, delete: async (id: string): Promise<boolean> => { try { await sessionApi.delete(Number(id)); return true; } catch (e) { return false; } },
 };

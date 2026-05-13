@@ -11,6 +11,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { Colors, Typography, Spacing, BorderRadius, Shadows } from '../../utils/theme';
 import GlassCard from '../../components/GlassCard';
 import GradientButton from '../../components/GradientButton';
+import PrimaryButton from '../../components/PrimaryButton';
+import { reportApi } from '../../api';
+import { Alert } from 'react-native';
 
 import { CalculationResult } from '../../types/result';
 
@@ -49,6 +52,18 @@ const ResultScreen = ({ route, navigation }: any) => {
   }
 
   const f = (num: number, digits = 2) => Number(num.toFixed(digits));
+
+  const handlePreviewReport = async () => {
+    try {
+      Alert.alert('Info', 'ÄĐang chuáº©n bá»‹ bĂ¡o cĂ¡o...', [{ text: 'OK' }]);
+      const response = await reportApi.previewReport({ result });
+      Alert.alert('ThĂ nh cĂ´ng', 'BĂ¡o cĂ¡o Ä‘Ă£ sÄƒn sĂ ng! (Vui lĂ²ng check log hoáº·c lĂªn thiáº¿t káº¿ mĂ n hĂ¬nh Text trong tÆ°Æ¡ng lai)');
+      console.log(response.markdown || response.text || response);
+    } catch (e) {
+      Alert.alert('Lá»—i', 'KhĂ´ng thá»ƒ táº¡o bĂ¡o cĂ¡o');
+      console.error(e);
+    }
+  };
 
   // ─── Build tab data ────────────────────────────────────────
   const getTabData = (tabIndex: number): TabRow[] | null => {
