@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -11,6 +11,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Typography, Spacing, BorderRadius, Shadows } from '../../utils/theme';
 import GlassCard from '../../components/GlassCard';
+import { dashboardApi } from '../../api';
 
 interface FeatureCardProps {
   icon: keyof typeof Ionicons.glyphMap;
@@ -36,6 +37,27 @@ const FeatureCard = ({ icon, title, subtitle, iconBgColor, iconColor, onPress }:
 );
 
 const HomeScreen = ({ navigation }: any) => {
+  const [dashboard, setDashboard] = useState<any>(null);
+
+  useEffect(() => {
+    const loadDashboard = async () => {
+      try {
+        const data = await dashboardApi.getOverview();
+        setDashboard(data);
+      } catch (error) {
+        console.log('Load dashboard failed:', error);
+      }
+    };
+
+    loadDashboard();
+  }, []);
+
+  const totalCalculations = dashboard?.summary?.total_calculations ?? 0;
+  const savedProjects = dashboard?.quick_access?.templates_count ?? 0;
+  const lastCalculationAt = dashboard?.summary?.last_calculation_at
+    ? new Date(dashboard.summary.last_calculation_at).toLocaleDateString('vi-VN')
+    : 'N/A';
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
@@ -113,21 +135,43 @@ const HomeScreen = ({ navigation }: any) => {
         <View style={[styles.statsContainer, Shadows.card]}>
           <View style={styles.statsRow}>
             <View style={styles.statItem}>
-              <Text style={styles.statValue}>12</Text>
+              <Text style={styles.statValue}>{totalCalculations}</Text>
               <Text style={styles.statLabel}>TOTAL CALCULATIONS</Text>
             </View>
             <View style={styles.statDivider} />
             <View style={styles.statItem}>
-              <Text style={styles.statValue}>Nov 5</Text>
+              <Text style={styles.statValue}>{lastCalculationAt}</Text>
               <Text style={styles.statLabel}>LAST CALCULATION</Text>
             </View>
             <View style={styles.statDivider} />
             <View style={styles.statItem}>
-              <Text style={styles.statValue}>3</Text>
+              <Text style={styles.statValue}>{savedProjects}</Text>
               <Text style={styles.statLabel}>SAVED PROJECTS</Text>
             </View>
           </View>
         </View>
+
+        {dashboard?.recent_calculations?.length > 0 && (
+          <>
+            <Text style={styles.sectionTitle}>Recent Calculations</Text>
+            <View style={[styles.statsContainer, Shadows.card]}>
+              {dashboard.recent_calculations.slice(0, 3).map((item: any) => (
+                <TouchableOpacity
+                  key={item.session_id}
+                  style={styles.recentItem}
+                  onPress={() => navigation.navigate('History')}
+                >
+                  <Text style={styles.recentName} numberOfLines={1}>
+                    {item.session_name}
+                  </Text>
+                  <Text style={styles.recentMeta}>
+                    {item.pct ? `${Number(item.pct).toFixed(2)} kW` : 'N/A'} â€¢ {item.motor_model ?? 'N/A'}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -283,6 +327,22 @@ const styles = StyleSheet.create({
     width: 1,
     height: 48,
     backgroundColor: Colors.border,
+  },
+  recentItem: {
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.sm,
+    borderTopWidth: 1,
+    borderTopColor: Colors.borderLight,
+  },
+  recentName: {
+    ...Typography.body,
+    fontWeight: '600',
+    color: Colors.textPrimary,
+  },
+  recentMeta: {
+    ...Typography.bodySmall,
+    color: Colors.textMuted,
+    marginTop: 2,
   },
 });
 

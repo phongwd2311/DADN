@@ -1,6 +1,3 @@
-// Repository Pattern: Xử lý toàn bộ thao tác dữ liệu lịch sử tính toán
-// Đây là nguồn dữ liệu duy nhất cho HistoryScreen — không gọi LocalDb trực tiếp từ UI
-
 import { LocalDb } from './localDb';
 import { InputParams } from '../types/input';
 import { CalculationResult } from '../types/result';
@@ -9,7 +6,9 @@ import { sessionApi } from '../api/sessionApi';
 export interface HistoryRecord {
   id: string;
   timestamp: string;
+  sessionName?: string;
   input: Partial<InputParams>;
+  resultData?: CalculationResult;
   output: {
     motorPower: number;
     transmissionRatio: number;
@@ -22,9 +21,6 @@ export interface HistoryRecord {
 }
 
 export const HistoryRepository = {
-  /**
-   * Lưu một kết quả tính toán mới vào lịch sử
-   */
   save: async (input: Partial<InputParams>, result: CalculationResult): Promise<boolean> => {
     const record: HistoryRecord = {
       id: Date.now().toString(),
@@ -41,31 +37,71 @@ export const HistoryRepository = {
       },
     };
 
-    // Đồng bộ lên Backend (try-catch để không sập app nếu mất mạng)
     try {
       const backendInput = {
-        force_f: input.F,
-        velocity_v: input.v,
-        diameter_d: input.D,
-        lifespan_l: input.L,
+        F: Number(input.F ?? 0),
+        v: Number(input.v ?? 0),
+        D: Number(input.D ?? 0),
+        t1: 60,
+        T1_ratio: 1,
+        t2: 40,
+        T2_ratio: 0.65,
+        uh: 10,
+        gearbox_type: 'KHAI_TRIEN',
+        tmm_t1_ratio: 1.4,
       };
-
-      const backendResult = {
-        equivalent_power: result.motor?.power,
-        total_ratio_ut: result.shaftTable?.truc1?.u, // Lấy tạm u1
-      };
-
-      const sessionName = `Hệ dẫn động ${new Date().toLocaleDateString('vi-VN')}`;
-      await sessionApi.create(sessionName, backendInput, backendResult);
+      const sessionName = `He dan dong ${new Date().toISOString()}`;
+      await sessionApi.create(sessionName, backendInput, result);
     } catch (error) {
-      console.log("Lỗi đồng bộ mây, chỉ lưu local:", error);
+      console.log('Sync backend failed, keep local only:', error);
     }
 
     return LocalDb.save('history', record);
   },
 
-  /**
-   * Lấy toàn bộ lịch sử tính toán
-   */
-  getAll: async (): Promise<HistoryRecord[]> => { try { const response = await sessionApi.getAll(); return response.sessions.map((s: any) => ({ id: s.id.toString(), timestamp: s.created_at, input: { F: s.input_data?.force_f, v: s.input_data?.velocity_v, D: s.input_data?.diameter_d, L: s.input_data?.lifespan_l }, output: { motorPower: s.result_data?.equivalent_power || 0, transmissionRatio: s.result_data?.total_ratio_ut || 0, chainParams: { pitch: 0 } } })); } catch (e) { return LocalDb.getAll('history'); } }, delete: async (id: string): Promise<boolean> => { try { await sessionApi.delete(Number(id)); return true; } catch (e) { return false; } },
+  getAll: async (): Promise<HistoryRecord[]> => {
+    try {
+      const response = await sessionApi.getAll();
+      const sessions = Array.isArray(response?.sessions) ? response.sessions : [];
+
+      return sessions.map((s: any) => {
+        const input = s?.input_json ?? {};
+        const result = s?.result_json ?? {};
+        const chainParams = result?.chainParams ?? {};
+
+        return {
+          id: String(s.session_id),
+          timestamp: s.created_at ?? new Date().toISOString(),
+          sessionName: s.session_name ?? `Session ${s.session_id}`,
+          input: {
+            F: input.F ?? 0,
+            v: input.v ?? 0,
+            D: input.D ?? 0,
+            L: input.L ?? undefined,
+          },
+          resultData: result as CalculationResult,
+          output: {
+            motorPower: result.Pct ?? 0,
+            transmissionRatio: result.ut ?? 0,
+            chainParams: {
+              pitch: chainParams.p ?? 0,
+              z1: chainParams.z1,
+              z2: chainParams.z2,
+            },
+          },
+        };
+      });
+    } catch (e) {
+      return LocalDb.getAll('history');
+    }
+  },
+
+  delete: async (id: string): Promise<boolean> => {
+    try {
+      await sessionApi.delete(Number(id));
+      return true;
+    } catch (e) {
+      return false;
+    }
+  },
 };

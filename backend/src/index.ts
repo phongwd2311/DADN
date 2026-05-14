@@ -8,6 +8,9 @@ import motorRoutes from "./routes/motors";
 import calculateRoutes from "./routes/calculate";
 import standardsRoutes from "./routes/standards";
 import reportRoutes from "./routes/report";
+import dashboardRoutes from "./routes/dashboard";
+import draftsRoutes from "./routes/drafts";
+import templatesRoutes from "./routes/templates";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -23,6 +26,9 @@ app.use("/api/motors", motorRoutes);
 app.use("/api/calculate", calculateRoutes);
 app.use("/api/standards", standardsRoutes);
 app.use("/api/report", reportRoutes);
+app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/drafts", draftsRoutes);
+app.use("/api/templates", templatesRoutes);
 
 // Health check
 app.get("/api/health", (_req, res) => {
@@ -52,6 +58,12 @@ app.listen(PORT, () => {
   console.log("  GET  /api/standards");
   console.log("  GET  /api/standards/:tableKey");
   console.log("  POST /api/report/preview");
+  console.log("  GET  /api/dashboard");
+  console.log("  GET  /api/drafts");
+  console.log("  GET  /api/drafts/latest");
+  console.log("  POST /api/drafts/autosave");
+  console.log("  GET  /api/templates");
+  console.log("  POST /api/templates");
   console.log("  GET  /api/health");
 });
 

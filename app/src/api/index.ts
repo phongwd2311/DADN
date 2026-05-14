@@ -4,4 +4,7 @@ export { sessionApi } from './sessionApi';
 export { motorsApi } from './motorsApi';
 export { reportApi } from './reportApi';
 export { standardsApi } from './standardsApi';
+export { dashboardApi } from './dashboardApi';
+export { draftsApi } from './draftsApi';
+export { templatesApi } from './templatesApi';
 export { default as apiClient } from './client';

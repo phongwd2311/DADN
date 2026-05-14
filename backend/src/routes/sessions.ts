@@ -16,7 +16,9 @@ router.use(authMiddleware);
 router.get("/", async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const sessions = await prisma.calculationSession.findMany({
-      where: { user_id: req.user!.userId },
+      where: {
+        user_id: req.user!.userId
+      },
       orderBy: { created_at: "desc" },
       include: {
         design_inputs: true,

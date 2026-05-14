@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  Alert,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -12,8 +13,9 @@ import { Colors, Typography, Spacing, BorderRadius, Shadows } from '../../utils/
 import GlassCard from '../../components/GlassCard';
 import GradientButton from '../../components/GradientButton';
 import PrimaryButton from '../../components/PrimaryButton';
-import { reportApi } from '../../api';
-import { Alert } from 'react-native';
+import { reportApi, sessionApi } from '../../api';
+import * as Print from 'expo-print';
+import * as Sharing from 'expo-sharing';
 
 import { CalculationResult } from '../../types/result';
 
@@ -38,9 +40,12 @@ interface TabRow {
 // ─── Main Component ────────────────────────────────────────────
 const ResultScreen = ({ route, navigation }: any) => {
   const input = route?.params?.input ?? { F: 2500, v: 1.25, D: 320 };
+  const calculationInput = route?.params?.calculationInput ?? null;
   const strategy = route?.params?.strategy ?? 'cost';
   const result: CalculationResult = route?.params?.resultData;
   const [activeTab, setActiveTab] = useState(0);
+  const [exporting, setExporting] = useState(false);
+  const hasSavedSessionRef = useRef(false);
 
   if (!result) {
     return (
@@ -52,16 +57,131 @@ const ResultScreen = ({ route, navigation }: any) => {
   }
 
   const f = (num: number, digits = 2) => Number(num.toFixed(digits));
+  const isChainDrive = (result.external_drive_type ?? 'CHAIN') === 'CHAIN';
+  const chainParams = result.chainParams ?? null;
+  const chainStrength = result.chainStrength ?? null;
+  const hasChainData = isChainDrive && !!chainParams && !!chainStrength;
+
+  useEffect(() => {
+    if (hasSavedSessionRef.current) {
+      return;
+    }
+
+    const saveSession = async () => {
+      try {
+        const payloadInput =
+          calculationInput && typeof calculationInput === 'object'
+            ? calculationInput
+            : {
+                F: Number(input.F ?? 0),
+                v: Number(input.v ?? 0),
+                D: Number(input.D ?? 0),
+                t1: 60,
+                T1_ratio: 1,
+                t2: 40,
+                T2_ratio: 0.65,
+                uh: 10,
+                gearbox_type: 'KHAI_TRIEN',
+                tmm_t1_ratio: 1.4,
+              };
+
+        const sessionName = `Session ${new Date().toLocaleString('vi-VN')}`;
+        await sessionApi.create(sessionName, payloadInput, result);
+      } catch (error) {
+        console.log('Save session to backend failed:', error);
+      } finally {
+        hasSavedSessionRef.current = true;
+      }
+    };
+
+    saveSession();
+  }, [calculationInput, input.D, input.F, input.v, result]);
 
   const handlePreviewReport = async () => {
+    if (exporting) {
+      return;
+    }
+
     try {
-      Alert.alert('Info', 'ÄĐang chuáº©n bá»‹ bĂ¡o cĂ¡o...', [{ text: 'OK' }]);
-      const response = await reportApi.previewReport({ result });
-      Alert.alert('ThĂ nh cĂ´ng', 'BĂ¡o cĂ¡o Ä‘Ă£ sÄƒn sĂ ng! (Vui lĂ²ng check log hoáº·c lĂªn thiáº¿t káº¿ mĂ n hĂ¬nh Text trong tÆ°Æ¡ng lai)');
-      console.log(response.markdown || response.text || response);
+      setExporting(true);
+      Alert.alert('Info', 'Đang chuẩn bị báo cáo...');
+      const response = await reportApi.previewReport({ 
+        input: input,
+        result: result,
+        motor: result.motor
+      });
+
+      if (!response?.exportable) {
+        Alert.alert('Lỗi', 'Không thể xuất báo cáo ở thời điểm này.');
+        return;
+      }
+
+      const sharingAvailable = await Sharing.isAvailableAsync();
+      if (!sharingAvailable) {
+        Alert.alert('Không hỗ trợ', 'Thiết bị này không hỗ trợ chia sẻ file PDF.');
+        return;
+      }
+
+      const generatedAt = new Date(response.generated_at).toLocaleString('vi-VN');
+      const formulasHtml = response.sections?.formulas?.map((fm: any) => `
+        <div class="formula">
+          <strong>${fm.id}</strong>: ${fm.formula}<br/>
+          <em>${fm.substitution || ''}</em>
+        </div>
+      `).join('') || '';
+
+      const htmlContent = `
+        <html>
+          <head>
+            <meta charset="utf-8" />
+            <style>
+              body { font-family: 'Helvetica', 'Arial', sans-serif; padding: 20px; line-height: 1.6; color: #333; }
+              h1 { text-align: center; color: #2c3e50; margin-bottom: 5px; }
+              .timestamp { text-align: center; color: #7f8c8d; font-size: 12px; margin-bottom: 20px; }
+              h2 { border-bottom: 2px solid #3498db; color: #2980b9; padding-bottom: 5px; margin-top: 25px; }
+              .row { margin-bottom: 8px; display: flex; }
+              .label { font-weight: bold; width: 250px; flex-shrink: 0; }
+              .value { flex-grow: 1; }
+              .formula { background-color: #f8f9fa; padding: 12px; border-left: 4px solid #f1c40f; margin-bottom: 10px; border-radius: 0 4px 4px 0; }
+              .formula strong { color: #d35400; }
+              .formula em { color: #27ae60; font-family: monospace; display: block; margin-top: 5px; }
+            </style>
+          </head>
+          <body>
+            <h1>BÁO CÁO THÔNG SỐ KỸ THUẬT</h1>
+            <div class="timestamp">Tạo lúc: ${generatedAt}</div>
+            
+            <h2>1. Thông số đầu vào</h2>
+            <div class="row"><span class="label">Lực vòng trên băng tải (F):</span> <span class="value">${input.F} N</span></div>
+            <div class="row"><span class="label">Vận tốc băng tải (v):</span> <span class="value">${input.v} m/s</span></div>
+            <div class="row"><span class="label">Đường kính tang (D):</span> <span class="value">${input.D} mm</span></div>
+
+            <h2>2. Thông số động cơ</h2>
+            <div class="row"><span class="label">Mã động cơ:</span> <span class="value">${result?.motor?.id || 'N/A'}</span></div>
+            <div class="row"><span class="label">Công suất:</span> <span class="value">${result?.motor?.power} kW</span></div>
+            <div class="row"><span class="label">Vận tốc:</span> <span class="value">${result?.motor?.speed} vòng/phút</span></div>
+
+            <h2>3. Thông số bộ truyền xích</h2>
+            <div class="row"><span class="label">Tỷ số truyền xích (ux):</span> <span class="value">${f(result?.shaftTable?.truc1?.u || 0)}</span></div>
+            <div class="row"><span class="label">Bước xích (p):</span> <span class="value">${chainParams?.p ?? 'N/A'} mm</span></div>
+            <div class="row"><span class="label">Số răng đĩa xích:</span> <span class="value">z1 = ${chainParams?.z1 ?? 'N/A'}, z2 = ${chainParams?.z2 ?? 'N/A'}</span></div>
+            <div class="row"><span class="label">Khoảng cách trục (a):</span> <span class="value">${f(chainParams?.a || 0)} mm</span></div>
+            <div class="row"><span class="label">Số lần va đập xích (i):</span> <span class="value">${f(chainStrength?.impact_freq || 0)} lần/s</span></div>
+            
+            <h2>4. Công thức tính toán (Preview)</h2>
+            ${formulasHtml}
+          </body>
+        </html>
+      `;
+
+      const { uri } = await Print.printToFileAsync({ html: htmlContent });
+      await Sharing.shareAsync(uri, { UTI: '.pdf', mimeType: 'application/pdf' });
+      
     } catch (e) {
-      Alert.alert('Lá»—i', 'KhĂ´ng thá»ƒ táº¡o bĂ¡o cĂ¡o');
+      Alert.alert('Lỗi', 'Không thể tạo báo cáo PDF');
       console.error(e);
+    } finally {
+      setExporting(false);
     }
   };
 
@@ -92,20 +212,25 @@ const ResultScreen = ({ route, navigation }: any) => {
         ];
       }
       case 1: { // Bộ truyền xích
+        if (!hasChainData || !chainParams || !chainStrength) {
+          return null;
+        }
+
         return [
           { stt: 1, param: 'Tỷ số truyền xích thực', value: f(result.shaftTable.truc3.u), unit: '-' },
-          { stt: 2, param: 'Số răng đĩa xích nhỏ (z1)', value: result.chainParams.z1, unit: 'răng' },
-          { stt: 3, param: 'Số răng đĩa xích lớn (z2)', value: result.chainParams.z2, unit: 'răng' },
-          { stt: 4, param: 'Bước xích', value: f(result.chainParams.p), unit: 'mm' },
-          { stt: 5, param: 'Số mắt xích', value: result.chainParams.xc, unit: 'mắt' },
-          { stt: 6, param: 'Khoảng cách trục', value: f(result.chainParams.a), unit: 'mm' },
-          { stt: 7, param: 'Vận tốc xích', value: f(result.chainStrength.v_chain), unit: 'm/s' },
-          { stt: 8, param: 'Lực vòng', value: f(result.chainStrength.Ft), unit: 'N' },
-          { stt: 9, param: 'Lực căng F0', value: f(result.chainStrength.F0), unit: 'N' },
-          { stt: 10, param: 'Hệ số an toàn', value: f(result.chainStrength.s), unit: '-' },
-          { stt: 11, param: 'Đường kính vòng chia d1', value: f(result.chainParams.d1), unit: 'mm' },
-          { stt: 12, param: 'Đường kính vòng chia d2', value: f(result.chainParams.d2), unit: 'mm' },
-          { stt: 13, param: 'Lực tác dụng lên trục Fr', value: f(result.chainParams.Fr), unit: 'N' },
+          { stt: 2, param: 'Số răng đĩa xích nhỏ (z1)', value: chainParams.z1, unit: 'răng' },
+          { stt: 3, param: 'Số răng đĩa xích lớn (z2)', value: chainParams.z2, unit: 'răng' },
+          { stt: 4, param: 'Bước xích', value: f(chainParams.p), unit: 'mm' },
+          { stt: 5, param: 'Số mắt xích', value: chainParams.xc, unit: 'mắt' },
+          { stt: 6, param: 'Khoảng cách trục', value: f(chainParams.a), unit: 'mm' },
+          { stt: 7, param: 'Vận tốc xích', value: f(chainStrength.v_chain), unit: 'm/s' },
+          { stt: 8, param: 'Số lần va đập xích (i)', value: f(chainStrength.impact_freq ?? 0), unit: 'lần/s' },
+          { stt: 9, param: 'Lực vòng', value: f(chainStrength.Ft), unit: 'N' },
+          { stt: 10, param: 'Lực căng F0', value: f(chainStrength.F0), unit: 'N' },
+          { stt: 11, param: 'Hệ số an toàn', value: f(chainStrength.s), unit: '-' },
+          { stt: 12, param: 'Đường kính vòng chia d1', value: f(chainParams.d1), unit: 'mm' },
+          { stt: 13, param: 'Đường kính vòng chia d2', value: f(chainParams.d2), unit: 'mm' },
+          { stt: 14, param: 'Lực tác dụng lên trục Fr', value: f(chainParams.Fr), unit: 'N' },
         ];
       }
       default:
@@ -124,8 +249,12 @@ const ResultScreen = ({ route, navigation }: any) => {
             <Ionicons name="arrow-back" size={22} color={Colors.textPrimary} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Results</Text>
-          <TouchableOpacity style={styles.shareBtn}>
-            <Ionicons name="share-outline" size={20} color={Colors.textPrimary} />
+          <TouchableOpacity
+            style={[styles.shareBtn, exporting && { opacity: 0.6 }]}
+            onPress={handlePreviewReport}
+            disabled={exporting}
+          >
+            <Ionicons name={exporting ? "hourglass-outline" : "share-outline"} size={20} color={Colors.textPrimary} />
           </TouchableOpacity>
         </View>
 
@@ -216,27 +345,29 @@ const ResultScreen = ({ route, navigation }: any) => {
               <Ionicons name="construct-outline" size={48} color={Colors.textMuted} />
               <Text style={styles.placeholderTitle}>Đang phát triển</Text>
               <Text style={styles.placeholderText}>
-                Module "{TABS[activeTab]}" sẽ được cập nhật trong phiên bản tiếp theo.
+                {activeTab === 1 && !isChainDrive
+                  ? 'Bộ truyền xích không áp dụng cho cấu hình bộ truyền ngoài hiện tại.'
+                  : `Module "${TABS[activeTab]}" sẽ được cập nhật trong phiên bản tiếp theo.`}
               </Text>
             </View>
           )}
         </View>
 
         {/* Chain Strength Validation */}
-        {activeTab <= 1 && (
+        {activeTab <= 1 && hasChainData && chainStrength && (
           <>
             <Text style={styles.sectionTitle}>Cơ tính và Kiểm nghiệm bền xích</Text>
-            <GlassCard accentColor={result.chainStrength.passed ? Colors.success : Colors.error} style={{ marginBottom: Spacing.xl }}>
+            <GlassCard accentColor={chainStrength.passed ? Colors.success : Colors.error} style={{ marginBottom: Spacing.xl }}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: Spacing.sm }}>
-                <Text style={styles.strategyText}>Hệ số an toàn (s): {f(result.chainStrength.s)}</Text>
-                <Text style={[styles.strategyText, { color: result.chainStrength.passed ? Colors.success : Colors.error }]}>
-                  (Yêu cầu: ≥ {f(result.chainStrength.s_min)})
+                <Text style={styles.strategyText}>Hệ số an toàn (s): {f(chainStrength.s)}</Text>
+                <Text style={[styles.strategyText, { color: chainStrength.passed ? Colors.success : Colors.error }]}>
+                  (Yêu cầu: ≥ {f(chainStrength.s_min)})
                 </Text>
               </View>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                <Text style={styles.strategyText}>Ứng suất tiếp xúc (σH1): {f(result.chainStrength.sigmaH1)} MPa</Text>
-                <Text style={[styles.strategyText, { color: result.chainStrength.contactPassed ? Colors.success : Colors.error }]}>
-                  (Yêu cầu: ≤ {f(result.chainStrength.sigmaH_allow)})
+                <Text style={styles.strategyText}>Ứng suất tiếp xúc (σH1): {f(chainStrength.sigmaH1)} MPa</Text>
+                <Text style={[styles.strategyText, { color: chainStrength.contactPassed ? Colors.success : Colors.error }]}>
+                  (Yêu cầu: ≤ {f(chainStrength.sigmaH_allow)})
                 </Text>
               </View>
             </GlassCard>

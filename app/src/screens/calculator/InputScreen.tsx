@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -8,12 +8,14 @@ import {
   Platform,
   SafeAreaView,
   TouchableOpacity,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Typography, Spacing, BorderRadius, Shadows } from '../../utils/theme';
 import CustomInput from '../../components/CustomInput';
 import GradientButton from '../../components/GradientButton';
-import { calculateApi, GearboxType } from '../../api/calculateApi';
+import { calculateApi, ChainLayoutType, ExternalDriveType, GearboxType } from '../../api/calculateApi';
+import { draftsApi, templatesApi } from '../../api';
 
 const InputScreen = ({ navigation }: any) => {
   const [force, setForce] = useState('');
@@ -26,8 +28,125 @@ const InputScreen = ({ navigation }: any) => {
   const [uh, setUh] = useState('12.5');
   const [tmmRatio, setTmmRatio] = useState('1.6');
   const [gearboxType, setGearboxType] = useState<GearboxType>('KHAI_TRIEN');
+  const [externalDriveType, setExternalDriveType] = useState<ExternalDriveType>('CHAIN');
+  const [chainLayout, setChainLayout] = useState<ChainLayoutType>('HORIZONTAL_OR_LT40');
   const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState<{ force?: string; velocity?: string; diameter?: string; uh?: string; tmmRatio?: string }>({});
+  const [templates, setTemplates] = useState<any[]>([]);
+  const [draftId, setDraftId] = useState<number | undefined>(undefined);
+  const [errors, setErrors] = useState<{ force?: string; velocity?: string; diameter?: string; uh?: string; tmmRatio?: string; t1?: string; t2?: string }>({});
+  const isHydratingRef = useRef(true);
+
+  const applyTemplateInput = (input: any) => {
+    if (!input || typeof input !== 'object') return;
+    setForce(String(input.F ?? ''));
+    setVelocity(String(input.v ?? ''));
+    setDiameter(String(input.D ?? ''));
+    setT1(String(input.t1 ?? ''));
+    setT2(String(input.t2 ?? ''));
+    setUh(String(input.uh ?? '12.5'));
+    setTmmRatio(String(input.tmm_t1_ratio ?? '1.6'));
+    setGearboxType(input.gearbox_type === 'PHAN_DOI' ? 'PHAN_DOI' : 'KHAI_TRIEN');
+    const edt = ['CHAIN', 'BELT', 'GEAR', 'NONE'].includes(input.external_drive_type)
+      ? (input.external_drive_type as ExternalDriveType)
+      : 'CHAIN';
+    setExternalDriveType(edt);
+    const cl = input.chain_layout === 'STEEP_GT40' ? 'STEEP_GT40' : 'HORIZONTAL_OR_LT40';
+    setChainLayout(cl);
+  };
+
+  const buildCalculationPayload = (overrides?: Partial<Record<string, unknown>>) => {
+    const t1Num = t1 ? Number(t1) : undefined;
+    const t2Num = t2 ? Number(t2) : undefined;
+
+    const T1Num = T1 ? Number(T1) : undefined;
+    const T2Num = T2 ? Number(T2) : undefined;
+
+    let T1_ratio = 1;
+    let T2_ratio = 1;
+    if (T1Num !== undefined && T2Num !== undefined && T1Num > 0) {
+      T1_ratio = 1;
+      T2_ratio = T2Num / T1Num;
+    }
+
+    return {
+      F: Number(force),
+      v: Number(velocity),
+      D: Number(diameter),
+      t1: t1Num ?? 20,
+      T1_ratio,
+      t2: t2Num ?? 80,
+      T2_ratio: T2_ratio ?? 0.65,
+      uh: Number(uh),
+      gearbox_type: gearboxType,
+      tmm_t1_ratio: Number(tmmRatio),
+      external_drive_type: externalDriveType,
+      chain_layout: externalDriveType === 'CHAIN' ? chainLayout : undefined,
+      ...(overrides ?? {}),
+    };
+  };
+
+  useEffect(() => {
+    const bootstrap = async () => {
+      try {
+        const [draftRes, templateRes] = await Promise.all([
+          draftsApi.getLatest(),
+          templatesApi.getAll(),
+        ]);
+
+        if (Array.isArray(templateRes?.templates)) {
+          setTemplates(templateRes.templates);
+        }
+
+        const latestDraft = draftRes?.draft;
+        if (latestDraft?.draft_id) {
+          setDraftId(Number(latestDraft.draft_id));
+        }
+
+        const hasAnyLocalInput = !!(force || velocity || diameter || t1 || t2 || uh || tmmRatio);
+        if (!hasAnyLocalInput && latestDraft?.input) {
+          applyTemplateInput(latestDraft.input);
+        }
+      } catch (error) {
+        console.log('Load draft/template failed:', error);
+      } finally {
+        isHydratingRef.current = false;
+      }
+    };
+
+    bootstrap();
+    // intentionally run once on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (isHydratingRef.current) {
+      return;
+    }
+
+    const hasAnyInput = !!(force || velocity || diameter || t1 || t2 || T1 || T2 || uh || tmmRatio);
+    if (!hasAnyInput) {
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      try {
+        const payloadInput = buildCalculationPayload();
+        const res = await draftsApi.autosave({
+          draft_id: draftId,
+          draft_name: 'InputScreen Draft',
+          input: payloadInput,
+          result: null,
+        });
+        if (res?.draft_id) {
+          setDraftId(Number(res.draft_id));
+        }
+      } catch (error) {
+        console.log('Autosave draft failed:', error);
+      }
+    }, 1500);
+
+    return () => clearTimeout(timer);
+  }, [force, velocity, diameter, t1, T1, t2, T2, uh, tmmRatio, gearboxType, externalDriveType, chainLayout, draftId]);
 
   const validate = () => {
     const newErrors: Record<string, string> = {};
@@ -66,48 +185,40 @@ const InputScreen = ({ navigation }: any) => {
     if (!validate()) return;
     setLoading(true);
     
-    // Call facade calculation
     try {
-      // Calculate ratios if T1 and T2 are provided
-      // T_ratio = (T_i / T_max). By convention in these problems, usually T1 is the maximum torque (T_max).
-      // If user inputs T1 and T2, then T1_ratio = T1/T1 = 1.0, T2_ratio = T2/T1.
-      const t1Num = t1 ? Number(t1) : undefined;
-      const t2Num = t2 ? Number(t2) : undefined;
-      
-      const T1Num = T1 ? Number(T1) : undefined;
-      const T2Num = T2 ? Number(T2) : undefined;
-      
-      let T1_ratio = 1;
-      let T2_ratio = 1;
-      
-      if (T1Num !== undefined && T2Num !== undefined) {
-        // T1 is considered T_max
-        T1_ratio = 1;
-        T2_ratio = T2Num / T1Num;
-      }
-
-      const result = await calculateApi.calculate({
-        F: Number(force),
-        v: Number(velocity),
-        D: Number(diameter),
-        t1: t1Num ?? 20,
-        T1_ratio: T1_ratio ?? 1,
-        t2: t2Num ?? 80,
-        T2_ratio: T2_ratio ?? 0.65,
-        uh: Number(uh),
-        gearbox_type: gearboxType,
-        tmm_t1_ratio: Number(tmmRatio),
-      });
+      const payload = buildCalculationPayload();
+      const result = await calculateApi.calculate(payload);
 
       setLoading(false);
       navigation.navigate('Result', {
         resultData: result,
         input: { F: force, v: velocity, D: diameter },
+        calculationInput: payload,
         strategy: 'cost',
       });
     } catch (e) {
       console.error("Calculation Error:", e);
+      const maybeAxiosError = e as any;
+      const backendCode = maybeAxiosError?.response?.data?.code;
+      if (backendCode === 'motor_overload_requirement_not_met') {
+        Alert.alert('Không tìm thấy động cơ phù hợp', 'Không có động cơ thỏa điều kiện quá tải. Vui lòng giảm yêu cầu tải hoặc chỉnh lại Tmm/T1.');
+      } else {
+        Alert.alert('Lỗi tính toán', 'Tính toán thất bại. Vui lòng kiểm tra lại thông số đầu vào.');
+      }
       setLoading(false);
+    }
+  };
+
+  const handleSaveTemplate = async () => {
+    try {
+      const payload = buildCalculationPayload();
+      const templateName = `Template ${new Date().toLocaleString('vi-VN')}`;
+      await templatesApi.create(templateName, payload);
+      const refreshed = await templatesApi.getAll();
+      setTemplates(Array.isArray(refreshed?.templates) ? refreshed.templates : []);
+      Alert.alert('Thành công', 'Đã lưu template nhanh.');
+    } catch (error) {
+      Alert.alert('Lỗi', 'Không thể lưu template.');
     }
   };
 
@@ -166,6 +277,26 @@ const InputScreen = ({ navigation }: any) => {
             <Text style={styles.sectionTitle}>
               Chế độ tải thay đổi theo thời gian
             </Text>
+
+            <View style={styles.templateHeader}>
+              <Text style={styles.sectionTitle}>Template Library</Text>
+              <TouchableOpacity onPress={handleSaveTemplate}>
+                <Text style={styles.saveTemplateText}>LÆ°u template</Text>
+              </TouchableOpacity>
+            </View>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.templateRow}>
+              {templates.slice(0, 8).map((tpl: any) => (
+                <TouchableOpacity
+                  key={String(tpl.template_id)}
+                  style={styles.templateChip}
+                  onPress={() => applyTemplateInput(tpl.input)}
+                >
+                  <Text style={styles.templateChipText} numberOfLines={1}>
+                    {tpl.template_name}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
 
             <View style={styles.row}>
               <View style={styles.col}>
@@ -228,6 +359,45 @@ const InputScreen = ({ navigation }: any) => {
                 </Text>
               </TouchableOpacity>
             </View>
+
+            <Text style={styles.sectionTitle}>Loại bộ truyền ngoài</Text>
+            <View style={styles.toggleRow}>
+              {(['CHAIN', 'BELT', 'GEAR', 'NONE'] as ExternalDriveType[]).map((type) => (
+                <TouchableOpacity
+                  key={type}
+                  style={[styles.toggleButton, externalDriveType === type && styles.toggleButtonActive]}
+                  onPress={() => setExternalDriveType(type)}
+                >
+                  <Text style={[styles.toggleText, externalDriveType === type && styles.toggleTextActive]}>
+                    {type}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            {externalDriveType === 'CHAIN' && (
+              <>
+                <Text style={styles.sectionTitle}>Bố trí bộ truyền xích</Text>
+                <View style={styles.toggleRow}>
+                  <TouchableOpacity
+                    style={[styles.toggleButton, chainLayout === 'HORIZONTAL_OR_LT40' && styles.toggleButtonActive]}
+                    onPress={() => setChainLayout('HORIZONTAL_OR_LT40')}
+                  >
+                    <Text style={[styles.toggleText, chainLayout === 'HORIZONTAL_OR_LT40' && styles.toggleTextActive]}>
+                      Nằm ngang / {"<"}40°
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.toggleButton, chainLayout === 'STEEP_GT40' && styles.toggleButtonActive]}
+                    onPress={() => setChainLayout('STEEP_GT40')}
+                  >
+                    <Text style={[styles.toggleText, chainLayout === 'STEEP_GT40' && styles.toggleTextActive]}>
+                      Nghiêng {">"}40°
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </>
+            )}
 
             <View style={styles.row}>
               <View style={styles.col}>
@@ -340,6 +510,35 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: Spacing.sm,
     marginBottom: Spacing.md,
+  },
+  templateHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: Spacing.xs,
+  },
+  saveTemplateText: {
+    color: Colors.primary,
+    fontWeight: '700',
+    fontSize: 13,
+  },
+  templateRow: {
+    marginBottom: Spacing.md,
+  },
+  templateChip: {
+    backgroundColor: Colors.surfaceLight,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: BorderRadius.full,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    marginRight: Spacing.sm,
+    maxWidth: 180,
+  },
+  templateChipText: {
+    color: Colors.textSecondary,
+    fontSize: 12,
+    fontWeight: '600',
   },
   toggleButton: {
     flex: 1,

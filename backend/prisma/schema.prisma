@@ -19,6 +19,8 @@ model User {
   join_date     DateTime? @default(now()) @db.Timestamp(6)
   
   sessions      CalculationSession[]
+  draft_sessions DraftSession[]
+  input_templates InputTemplate[]
   password_reset_tokens PasswordResetToken[]
 
   @@schema("public")
@@ -30,7 +32,9 @@ model CalculationSession {
   session_id   Int       @id @default(autoincrement())
   user_id      Int?
   session_name String    @db.VarChar(255)
+  status       String?   @default("COMPLETED") @db.VarChar(20)
   created_at   DateTime? @default(now()) @db.Timestamp(6)
+  updated_at   DateTime? @updatedAt @db.Timestamp(6)
   is_synced    Boolean?  @default(false)
   input_json   Json?
   result_json  Json?
@@ -43,6 +47,37 @@ model CalculationSession {
 
   @@schema("public")
   @@map("calculation_sessions")
+}
+
+model DraftSession {
+  draft_id    Int       @id @default(autoincrement())
+  user_id     Int
+  draft_name  String    @db.VarChar(255)
+  input_json  Json
+  result_json Json?
+  created_at  DateTime  @default(now()) @db.Timestamp(6)
+  updated_at  DateTime  @updatedAt @db.Timestamp(6)
+
+  user        User      @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
+
+  @@index([user_id, updated_at])
+  @@schema("public")
+  @@map("draft_sessions")
+}
+
+model InputTemplate {
+  template_id   Int       @id @default(autoincrement())
+  user_id       Int
+  template_name String    @db.VarChar(255)
+  input_json    Json
+  created_at    DateTime  @default(now()) @db.Timestamp(6)
+  updated_at    DateTime  @updatedAt @db.Timestamp(6)
+
+  user          User      @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
+
+  @@index([user_id, updated_at])
+  @@schema("public")
+  @@map("input_templates")
 }
 
 // 3. Bảng Thông số đầu vào
@@ -208,11 +243,4 @@ model schema_migrations {
   @@ignore
 }
 
-model AuthSchemaMigrations {
-  version String @id @db.VarChar(255)
-
-  @@schema("auth")
-  @@map("schema_migrations")
-  @@ignore
-}
 

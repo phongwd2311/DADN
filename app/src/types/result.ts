@@ -46,6 +46,7 @@ export interface ChainStrengthCheck {
   sigmaH2: number;  // Ứng suất tiếp xúc đĩa 2
   sigmaH_allow: number; // [σH] cho phép
   contactPassed: boolean;
+  impact_freq?: number; // Số lần va đập xích
 }
 
 /** Thông tin động cơ được chọn */
@@ -66,9 +67,10 @@ export interface CalculationResult {
   Pct: number;               // Công suất cần thiết (kW)
   nlv: number;               // Số vòng quay trục công tác
   nsb: number;               // Số vòng quay sơ bộ
+  external_drive_type?: 'CHAIN' | 'BELT' | 'GEAR' | 'NONE';
   motor: MotorInfo;           // Động cơ được chọn
   shaftTable: ShaftTable;     // Bảng số liệu trên các trục
   // Chương 3
-  chainParams: ChainParams;  // Thông số bộ truyền xích
-  chainStrength: ChainStrengthCheck; // Kiểm nghiệm bền
+  chainParams?: ChainParams | null;  // Thông số bộ truyền xích
+  chainStrength?: ChainStrengthCheck | null; // Kiểm nghiệm bền
 }

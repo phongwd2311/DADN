@@ -76,7 +76,7 @@ const HistoryScreen = ({ navigation }: any) => {
         onPress={() =>
           navigation.navigate('Calculate', {
             screen: 'Result',
-            params: { input: item.input },
+            params: { input: item.input, resultData: item.resultData },
           })
         }
         activeOpacity={0.8}
@@ -95,6 +95,12 @@ const HistoryScreen = ({ navigation }: any) => {
               </Text>
             </View>
           </View>
+
+          {item.sessionName ? (
+            <Text style={styles.sessionName} numberOfLines={1}>
+              {item.sessionName}
+            </Text>
+          ) : null}
 
           <View style={styles.paramsRow}>
             <View style={styles.paramItem}>
@@ -289,6 +295,12 @@ const styles = StyleSheet.create({
   powerBadgeText: {
     fontSize: 13,
     fontWeight: '700',
+  },
+  sessionName: {
+    ...Typography.bodySmall,
+    color: Colors.textSecondary,
+    marginBottom: Spacing.sm,
+    fontWeight: '600',
   },
 
   // Params Row

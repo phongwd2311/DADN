@@ -2,6 +2,8 @@ import apiClient from "./client";
 import { CalculationResult } from "../types/result";
 
 export type GearboxType = "KHAI_TRIEN" | "PHAN_DOI";
+export type ExternalDriveType = "CHAIN" | "BELT" | "GEAR" | "NONE";
+export type ChainLayoutType = "HORIZONTAL_OR_LT40" | "STEEP_GT40";
 
 export interface CalculatePayload {
   F: number;
@@ -14,6 +16,8 @@ export interface CalculatePayload {
   uh: number;
   gearbox_type: GearboxType;
   tmm_t1_ratio: number;
+  external_drive_type?: ExternalDriveType;
+  chain_layout?: ChainLayoutType;
 }
 
 interface BackendCalculateResponse {

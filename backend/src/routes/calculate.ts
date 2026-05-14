@@ -41,18 +41,17 @@ function chooseMotor(
   tmmT1Ratio: number,
 ) {
   const ranked = motors
-    .filter((motor) => motor.rated_power != null && motor.rated_power >= pct)
+    .filter((motor) => {
+      if (motor.rated_power == null || motor.rated_power < pct) return false;
+      if (motor.tk_tdn == null || motor.tk_tdn < tmmT1Ratio) return false;
+      return true;
+    })
     .map((motor) => {
       const speed = motor.rated_speed ?? Number.POSITIVE_INFINITY;
       const speedDiff = Math.abs(speed - nsb);
-      const overloadOk = motor.tk_tdn != null ? motor.tk_tdn >= tmmT1Ratio : null;
-      const overloadRank = overloadOk === true ? 0 : overloadOk === null ? 1 : 2;
-      return { motor, speedDiff, overloadOk, overloadRank };
+      return { motor, speedDiff };
     })
     .sort((a, b) => {
-      if (a.overloadRank !== b.overloadRank) {
-        return a.overloadRank - b.overloadRank;
-      }
       if (a.speedDiff !== b.speedDiff) {
         return a.speedDiff - b.speedDiff;
       }
@@ -63,11 +62,7 @@ function chooseMotor(
     return ranked[0].motor;
   }
 
-  const fallbackBySpeed = motors
-    .filter((motor) => motor.rated_speed != null)
-    .sort((a, b) => Math.abs((a.rated_speed as number) - nsb) - Math.abs((b.rated_speed as number) - nsb));
-
-  return fallbackBySpeed[0] ?? null;
+  return null;
 }
 
 function selectGearRatios(ratio: number, type: GearboxType) {
@@ -159,7 +154,10 @@ router.post("/", async (req, res: Response): Promise<void> => {
 
     const motor = chooseMotor(allMotors, Pct, nsb, tmm_t1_ratio);
     if (!motor) {
-      res.status(400).json({ error: "Không có dữ liệu động cơ để lựa chọn" });
+      res.status(422).json({
+        error: "Không có động cơ thỏa điều kiện quá tải",
+        code: "motor_overload_requirement_not_met",
+      });
       return;
     }
 
@@ -298,6 +296,9 @@ router.post("/", async (req, res: Response): Promise<void> => {
         const s = selectedChain.Q / (dynamicFactors.kd * Ft + F0 + Fv);
         const sMinData = SAFETY_FACTOR_TABLE.find((item) => item.p === p) ?? { s_min: 8.5 };
 
+        // SR-08.6: Số lần va đập xích trong 1 giây
+        const impact_freq = (z1 * n3) / (15 * xc);
+
         const Fvd = 13e-7 * n3 * Math.pow(p, 3);
         const calcSigmaH = (kr: number) => {
           const insideSqrt = (kr * (Ft * dynamicFactors.kd + Fvd) * ELASTIC_MODULUS) / selectedChain.A;
@@ -335,6 +336,7 @@ router.post("/", async (req, res: Response): Promise<void> => {
           F0,
           s,
           s_min: sMinData.s_min,
+          impact_freq,
           passed,
           tensile_passed: s >= sMinData.s_min,
           sigmaH1,
