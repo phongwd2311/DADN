@@ -63,14 +63,10 @@ business/
 
 ```
 data/
-├── local_db/
-│   └── localDb.ts      ← SQLite/AsyncStorage adapter (Offline-first)
-├── repositories/
-│   └── historyRepository.ts  ← Repository Pattern: CRUD lịch sử
-├── factories/
-│   └── ComponentFactory.ts   ← Factory Method Pattern
-├── models/
-│   └── Components.ts
+├── localDb.ts         ← SQLite/AsyncStorage adapter (Offline-first)
+├── historyRepository.ts  ← Repository Pattern: CRUD lịch sử
+├── ComponentFactory.ts   ← Factory Method Pattern
+├── Components.ts
 └── sampleComponents.ts
 ```
 
@@ -79,7 +75,6 @@ data/
 ```
 services/
 ├── calculationService.ts  ← Service tính toán nhanh (utility)
-├── historyService.ts      ← Wrapper/deprecated → dùng historyRepository
 └── validationService.ts   ← Validation logic
 ```
 

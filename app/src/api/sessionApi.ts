@@ -20,6 +20,11 @@ export const sessionApi = {
     return response.data;
   },
 
+  update: async (id: number, data: { session_name?: string; status?: string; input?: any; result?: any }) => {
+    const response = await apiClient.put(`/sessions/${id}`, data);
+    return response.data;
+  },
+
   delete: async (id: number) => {
     const response = await apiClient.delete(`/sessions/${id}`);
     return response.data;

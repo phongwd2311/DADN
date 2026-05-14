@@ -2,7 +2,7 @@ import { Router, Response } from "express";
 import { Prisma } from "@prisma/client";
 import { prisma } from "../lib/prisma";
 import { authMiddleware, AuthRequest } from "../middleware/auth";
-import { createSessionSchema } from "../validators/schemas";
+import { createSessionSchema, updateSessionSchema } from "../validators/schemas";
 
 const router = Router();
 
@@ -17,7 +17,7 @@ router.get("/", async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const sessions = await prisma.calculationSession.findMany({
       where: { user_id: req.user!.userId },
-      orderBy: { created_at: "desc" },
+      orderBy: { updated_at: "desc" },
       include: {
         design_inputs: true,
         design_results: {
@@ -107,14 +107,21 @@ router.post("/", async (req: AuthRequest, res: Response): Promise<void> => {
 
     const { session_name, input, result } = parsed.data;
 
-    // 2. Tạo session và lưu JSON input/result
+    // 2. Tìm unique session name (nếu trùng, thêm hậu tố)
+    const uniqueSessionName = await getUniqueSessionName(
+      session_name,
+      req.user!.userId
+    );
+
+    // 3. Tạo session và lưu JSON input/result
     const session = await prisma.calculationSession.create({
       data: {
-        session_name,
+        session_name: uniqueSessionName,
         user_id: req.user!.userId,
+        status: "DRAFT",
         is_synced: true,
-        input_json: input as Prisma.InputJsonValue,
-        result_json: result as Prisma.InputJsonValue,
+        input_json: input as any,
+        result_json: result as any,
       },
       include: {
         design_inputs: true,
@@ -135,6 +142,127 @@ router.post("/", async (req: AuthRequest, res: Response): Promise<void> => {
     });
   } catch (err) {
     console.error("Create session error:", err);
+    res.status(500).json({ error: "Lỗi server" });
+  }
+});
+
+/**
+ * Helper function: Tìm tên session duy nhất (nếu trùng, thêm hậu tố)
+ */
+async function getUniqueSessionName(
+  originalName: string,
+  userId: number,
+  excludeSessionId?: number
+): Promise<string> {
+  let name = originalName;
+  let suffix = 1;
+  const maxAttempts = 100;
+
+  while (suffix <= maxAttempts) {
+    const existing = await prisma.calculationSession.findFirst({
+      where: {
+        user_id: userId,
+        session_name: name,
+        ...(excludeSessionId && { session_id: { not: excludeSessionId } }),
+      },
+    });
+
+    if (!existing) {
+      return name;
+    }
+
+    // Thêm hậu tố (e.g., "Project (1)", "Project (2)", ...)
+    name = `${originalName} (${suffix})`;
+    suffix++;
+  }
+
+  return name;
+}
+
+/**
+ * PUT /api/sessions/:id
+ * Cập nhật phiên tính toán (tên, status, input, result)
+ * 
+ * Body mẫu (tất cả field optional):
+ * {
+ *   "session_name": "Tên mới",
+ *   "status": "IN_PROGRESS",
+ *   "input": {...},
+ *   "result": {...}
+ * }
+ */
+router.put("/:id", async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const sessionId = parseInt(req.params.id as string, 10);
+
+    if (isNaN(sessionId)) {
+      res.status(400).json({ error: "ID không hợp lệ" });
+      return;
+    }
+
+    // 1. Validate input
+    const parsed = updateSessionSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({
+        error: "Dữ liệu không hợp lệ",
+        details: parsed.error.flatten().fieldErrors,
+      });
+      return;
+    }
+
+    const { session_name, status, input, result } = parsed.data;
+
+    // 2. Kiểm tra quyền sở hữu
+    const session = await prisma.calculationSession.findFirst({
+      where: {
+        session_id: sessionId,
+        user_id: req.user!.userId,
+      },
+    });
+
+    if (!session) {
+      res.status(404).json({ error: "Không tìm thấy phiên tính toán" });
+      return;
+    }
+
+    // 3. Nếu cập nhật tên, kiểm tra trùng và thêm hậu tố nếu cần
+    let finalSessionName = session.session_name;
+    if (session_name) {
+      finalSessionName = await getUniqueSessionName(
+        session_name,
+        req.user!.userId,
+        sessionId
+      );
+    }
+
+    // 4. Cập nhật session
+    const updatedSession = await prisma.calculationSession.update({
+      where: { session_id: sessionId },
+      data: {
+        ...(session_name && { session_name: finalSessionName }),
+        ...(status && { status }),
+        ...(input && { input_json: input as any }),
+        ...(result && { result_json: result as any }),
+      },
+      include: {
+        design_inputs: true,
+        design_results: {
+          include: {
+            shafts: { orderBy: { shaft_order: "asc" } },
+            bearings: true,
+            gear_drives: true,
+            housings: true,
+          },
+        },
+      },
+    });
+
+    res.json({
+      message: "Cập nhật phiên tính toán thành công",
+      session: updatedSession,
+    });
+  } catch (err) {
+    console.error("Update session error:", err);
     res.status(500).json({ error: "Lỗi server" });
   }
 });

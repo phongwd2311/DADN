@@ -102,7 +102,18 @@ const InputScreen = ({ navigation }: any) => {
       setLoading(false);
       navigation.navigate('Result', {
         resultData: result,
-        input: { F: force, v: velocity, D: diameter },
+        input: { 
+          F: Number(force),
+          v: Number(velocity),
+          D: Number(diameter),
+          t1: t1Num ?? 20,
+          T1_ratio: T1_ratio ?? 1,
+          t2: t2Num ?? 80,
+          T2_ratio: T2_ratio ?? 0.65,
+          uh: Number(uh),
+          gearbox_type: gearboxType,
+          tmm_t1_ratio: Number(tmmRatio),
+        },
         strategy: 'cost',
       });
     } catch (e) {

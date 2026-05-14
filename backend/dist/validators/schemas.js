@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.createSessionSchema = exports.calculateSchema = exports.loginSchema = exports.registerSchema = void 0;
+exports.updateSessionSchema = exports.createSessionSchema = exports.calculateSchema = exports.loginSchema = exports.registerSchema = void 0;
 const zod_1 = require("zod");
 // ==================== AUTH ====================
 exports.registerSchema = zod_1.z.object({
@@ -28,6 +28,7 @@ exports.calculateSchema = zod_1.z
     F: zod_1.z.number({ message: "Thiếu lực vòng F" }).positive("F phải > 0"),
     v: zod_1.z.number({ message: "Thiếu vận tốc v" }).positive("v phải > 0"),
     D: zod_1.z.number({ message: "Thiếu đường kính D" }).positive("D phải > 0"),
+    L: zod_1.z.number({ message: "Thiếu thời gian phục vụ L" }).positive("L phải > 0").optional(),
     t1: zod_1.z.number({ message: "Thiếu t1" }).nonnegative("t1 phải >= 0"),
     T1_ratio: zod_1.z.number({ message: "Thiếu T1_ratio" }).positive("T1_ratio phải > 0"),
     t2: zod_1.z.number({ message: "Thiếu t2" }).nonnegative("t2 phải >= 0"),
@@ -39,6 +40,14 @@ exports.calculateSchema = zod_1.z
     tmm_t1_ratio: zod_1.z
         .number({ message: "Thiếu Tmm/T1" })
         .positive("Tmm/T1 phải > 0"),
+    conditions: zod_1.z.object({
+        k0_type: zod_1.z.number({ message: "k0_type phải là số" }).int().positive(),
+        ka_type: zod_1.z.number({ message: "ka_type phải là số" }).int().positive(),
+        kdc_type: zod_1.z.number({ message: "kdc_type phải là số" }).int().positive(),
+        kd_type: zod_1.z.number({ message: "kd_type phải là số" }).int().positive(),
+        kc_type: zod_1.z.number({ message: "kc_type phải là số" }).int().positive(),
+        kbt_type: zod_1.z.number({ message: "kbt_type phải là số" }).int().positive(),
+    }).optional(),
 })
     .refine((data) => data.t1 + data.t2 > 0, {
     message: "t1 + t2 phải > 0",
@@ -60,8 +69,29 @@ const sessionResultSchema = zod_1.z
     .passthrough();
 /** Schema tạo phiên tính toán (lưu JSON input + result) */
 exports.createSessionSchema = zod_1.z.object({
-    session_name: zod_1.z.string().min(1, "Tên phiên không được để trống").max(255),
+    session_name: zod_1.z
+        .string()
+        .min(1, "Tên phiên không được để trống")
+        .max(100, "Tên phiên tối đa 100 ký tự")
+        .transform((s) => s.trim())
+        .refine((s) => !/[<>/"';#]/.test(s), "Tên phiên không được chứa ký tự đặc biệt: < > / \" ' ; #"),
     input: sessionInputSchema,
     result: sessionResultSchema,
+});
+exports.updateSessionSchema = zod_1.z.object({
+    session_name: zod_1.z
+        .string()
+        .min(1, "Tên phiên không được để trống")
+        .max(100, "Tên phiên tối đa 100 ký tự")
+        .transform((s) => s.trim())
+        .refine((s) => !/[<>/"';#]/.test(s), "Tên phiên không được chứa ký tự đặc biệt: < > / \" ' ; #")
+        .optional(),
+    status: zod_1.z
+        .enum(["DRAFT", "IN_PROGRESS", "COMPLETED", "FAILED"], {
+        message: "Status không hợp lệ",
+    })
+        .optional(),
+    input: sessionInputSchema.optional(),
+    result: sessionResultSchema.optional(),
 });
 //# sourceMappingURL=schemas.js.map

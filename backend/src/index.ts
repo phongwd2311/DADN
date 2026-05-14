@@ -44,6 +44,7 @@ app.listen(PORT, () => {
   ║       GET  /api/sessions                 ║
   ║       POST /api/sessions                 ║
   ║       GET  /api/sessions/:id             ║
+  ║       PUT  /api/sessions/:id             ║
   ║       DELETE /api/sessions/:id           ║
   ║       GET  /api/motors                   ║
   ║       GET  /api/motors/:id               ║

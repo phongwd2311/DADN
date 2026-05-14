@@ -5,12 +5,15 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Typography, Spacing, BorderRadius, Shadows } from '../../utils/theme';
 import GlassCard from '../../components/GlassCard';
 import GradientButton from '../../components/GradientButton';
+import { sessionApi } from '../../api/sessionApi';
 
 import { CalculationResult } from '../../types/result';
 
@@ -38,6 +41,7 @@ const ResultScreen = ({ route, navigation }: any) => {
   const strategy = route?.params?.strategy ?? 'cost';
   const result: CalculationResult = route?.params?.resultData;
   const [activeTab, setActiveTab] = useState(0);
+  const [saving, setSaving] = useState(false);
 
   if (!result) {
     return (
@@ -47,6 +51,50 @@ const ResultScreen = ({ route, navigation }: any) => {
       </View>
     );
   }
+
+  const handleSave = async () => {
+    try {
+      setSaving(true);
+      const safeDate = new Date().toLocaleDateString('vi-VN').replace(/\//g, '-');
+      const sessionName = `Hệ dẫn động ${safeDate}`;
+      
+      // Ensure all numeric fields are numbers, not strings
+      const backendInput = {
+        F: Number(input.F),
+        v: Number(input.v),
+        D: Number(input.D),
+        t1: Number(input.t1 ?? 20),
+        T1_ratio: Number(input.T1_ratio ?? 1),
+        t2: Number(input.t2 ?? 80),
+        T2_ratio: Number(input.T2_ratio ?? 0.65),
+        uh: Number(input.uh ?? 12.5),
+        gearbox_type: input.gearbox_type || 'KHAI_TRIEN',
+        tmm_t1_ratio: Number(input.tmm_t1_ratio ?? 1.6),
+      };
+      
+      const backendResult = {
+        Pct: Number(result.Pct),
+        Plv: Number(result.Plv),
+        Ptd: Number(result.Ptd),
+        eta: Number(result.eta),
+        nlv: Number(result.nlv),
+        usb: Number(result.usb),
+        nsb: Number(result.nsb),
+      };
+      
+      console.log('Sending to backend:', { sessionName, backendInput, backendResult });
+      
+      await sessionApi.create(sessionName, backendInput, backendResult);
+      setSaving(false);
+      Alert.alert('Success', 'Calculation saved successfully', [
+        { text: 'OK', onPress: () => navigation.navigate('History') }
+      ]);
+    } catch (error) {
+      setSaving(false);
+      console.error('Failed to save:', error);
+      Alert.alert('Error', `Failed to save calculation: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  };
 
   const f = (num: number, digits = 2) => Number(num.toFixed(digits));
 
@@ -275,6 +323,21 @@ const ResultScreen = ({ route, navigation }: any) => {
           >
             <Ionicons name="arrow-back" size={18} color={Colors.textPrimary} />
             <Text style={styles.backButtonText}>Quay lại nhập liệu</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.saveButton, saving && { opacity: 0.6 }]}
+            onPress={handleSave}
+            disabled={saving}
+          >
+            {saving ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <>
+                <Ionicons name="save" size={18} color="#fff" />
+                <Text style={styles.saveButtonText}>Lưu kết quả</Text>
+              </>
+            )}
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -633,6 +696,21 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   continueButtonText: {
+    ...Typography.body,
+    fontWeight: '600',
+    color: '#fff',
+  },
+  saveButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 14,
+    backgroundColor: Colors.success,
+    borderRadius: BorderRadius.md,
+    gap: 8,
+  },
+  saveButtonText: {
     ...Typography.body,
     fontWeight: '600',
     color: '#fff',

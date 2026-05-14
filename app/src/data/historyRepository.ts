@@ -55,7 +55,8 @@ export const HistoryRepository = {
         total_ratio_ut: result.shaftTable?.truc1?.u, // Lấy tạm u1
       };
 
-      const sessionName = `Hệ dẫn động ${new Date().toLocaleDateString('vi-VN')}`;
+      const safeDate = new Date().toLocaleDateString('vi-VN').replace(/\//g, '-');
+      const sessionName = `Hệ dẫn động ${safeDate}`;
       await sessionApi.create(sessionName, backendInput, backendResult);
     } catch (error) {
       console.log("Lỗi đồng bộ mây, chỉ lưu local:", error);
