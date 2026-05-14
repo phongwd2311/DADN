@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   View,
   Text,
@@ -7,10 +7,12 @@ import {
   TouchableOpacity,
   SafeAreaView,
 } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Typography, Spacing, BorderRadius, Shadows } from '../../utils/theme';
 import GlassCard from '../../components/GlassCard';
+import { sessionApi } from '../../api/sessionApi';
 
 interface FeatureCardProps {
   icon: keyof typeof Ionicons.glyphMap;
@@ -36,6 +38,31 @@ const FeatureCard = ({ icon, title, subtitle, iconBgColor, iconColor, onPress }:
 );
 
 const HomeScreen = ({ navigation }: any) => {
+  const [totalSessions, setTotalSessions] = useState(0);
+  const [lastUpdatedAt, setLastUpdatedAt] = useState<string | null>(null);
+
+  const loadStats = useCallback(async () => {
+    try {
+      const response = await sessionApi.getAll();
+      const sessions = response.sessions || [];
+      setTotalSessions(sessions.length);
+      const latest = sessions[0]?.updated_at;
+      setLastUpdatedAt(latest ?? null);
+    } catch (error) {
+      console.error('Failed to load dashboard stats:', error);
+    }
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadStats();
+    }, [loadStats])
+  );
+
+  const lastCalcLabel = lastUpdatedAt
+    ? new Date(lastUpdatedAt).toLocaleDateString('vi-VN')
+    : '-';
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
@@ -113,17 +140,17 @@ const HomeScreen = ({ navigation }: any) => {
         <View style={[styles.statsContainer, Shadows.card]}>
           <View style={styles.statsRow}>
             <View style={styles.statItem}>
-              <Text style={styles.statValue}>12</Text>
+              <Text style={styles.statValue}>{totalSessions}</Text>
               <Text style={styles.statLabel}>TOTAL CALCULATIONS</Text>
             </View>
             <View style={styles.statDivider} />
             <View style={styles.statItem}>
-              <Text style={styles.statValue}>Nov 5</Text>
+              <Text style={styles.statValue}>{lastCalcLabel}</Text>
               <Text style={styles.statLabel}>LAST CALCULATION</Text>
             </View>
             <View style={styles.statDivider} />
             <View style={styles.statItem}>
-              <Text style={styles.statValue}>3</Text>
+              <Text style={styles.statValue}>{totalSessions}</Text>
               <Text style={styles.statLabel}>SAVED PROJECTS</Text>
             </View>
           </View>

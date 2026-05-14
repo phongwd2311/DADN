@@ -75,9 +75,13 @@ const sessionResultSchema = z
 export const createSessionSchema = z.object({
   session_name: z
     .string()
-    .min(1, "Tên phiên không được để trống")
+    .min(3, "Tên phiên phải có ít nhất 3 ký tự")
     .max(100, "Tên phiên tối đa 100 ký tự")
     .transform((s) => s.trim())
+    .refine(
+      (s) => /^[\p{L}\p{N} _()\-]+$/u.test(s),
+      "Tên phiên chỉ được chứa chữ, số, khoảng trắng, dấu -, _, ()"
+    )
     .refine(
       (s) => !/[<>/"';#]/.test(s),
       "Tên phiên không được chứa ký tự đặc biệt: < > / \" ' ; #"
@@ -89,9 +93,13 @@ export const createSessionSchema = z.object({
 export const updateSessionSchema = z.object({
   session_name: z
     .string()
-    .min(1, "Tên phiên không được để trống")
+    .min(3, "Tên phiên phải có ít nhất 3 ký tự")
     .max(100, "Tên phiên tối đa 100 ký tự")
     .transform((s) => s.trim())
+    .refine(
+      (s) => /^[\p{L}\p{N} _()\-]+$/u.test(s),
+      "Tên phiên chỉ được chứa chữ, số, khoảng trắng, dấu -, _, ()"
+    )
     .refine(
       (s) => !/[<>/"';#]/.test(s),
       "Tên phiên không được chứa ký tự đặc biệt: < > / \" ' ; #"

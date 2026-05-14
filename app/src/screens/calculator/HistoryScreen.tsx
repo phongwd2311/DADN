@@ -70,8 +70,16 @@ const HistoryScreen = ({ navigation }: any) => {
   };
 
   const handleSaveEdit = async () => {
+    const showAlert = (title: string, message: string) => {
+      if (Platform.OS === 'web') {
+        window.alert(`${title}: ${message}`);
+        return;
+      }
+      Alert.alert(title, message);
+    };
+
     if (!editName.trim()) {
-      Alert.alert('Error', 'Session name cannot be empty');
+      showAlert('Error', 'Session name cannot be empty');
       return;
     }
 
@@ -82,10 +90,14 @@ const HistoryScreen = ({ navigation }: any) => {
       });
       setEditModalVisible(false);
       loadSessions();
-      Alert.alert('Success', 'Session updated successfully');
+      showAlert('Success', 'Session updated successfully');
     } catch (error) {
       console.error('Failed to update session:', error);
-      Alert.alert('Error', 'Failed to update session');
+      const err = error as any;
+      const apiMessage = err?.response?.data?.error as string | undefined;
+      const nameErrors = err?.response?.data?.details?.session_name as string[] | undefined;
+      const detailMessage = nameErrors?.length ? nameErrors.join('\n') : undefined;
+      showAlert('Error', detailMessage || apiMessage || 'Failed to update session');
     }
   };
 

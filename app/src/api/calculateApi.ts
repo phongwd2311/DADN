@@ -7,6 +7,7 @@ export interface CalculatePayload {
   F: number;
   v: number;
   D: number;
+  L?: number;
   t1: number;
   T1_ratio: number;
   t2: number;
@@ -14,6 +15,14 @@ export interface CalculatePayload {
   uh: number;
   gearbox_type: GearboxType;
   tmm_t1_ratio: number;
+  conditions?: {
+    k0_type: number;
+    ka_type: number;
+    kdc_type: number;
+    kd_type: number;
+    kc_type: number;
+    kbt_type: number;
+  };
 }
 
 interface BackendCalculateResponse {

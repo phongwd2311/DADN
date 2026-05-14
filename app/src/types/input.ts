@@ -3,10 +3,20 @@ export interface InputParams {
   v: number;    // Vận tốc băng tải (m/s)
   D: number;    // Đường kính trục tang (mm)
   L?: number;   // Tuổi thọ (giờ)
+  conditions?: InputConditions; // Điều kiện làm việc để suy hệ số k
   t1?: number;  // Thời gian làm việc chế độ 1 (%)
   T1_ratio?: number; // T1/T ratio (mặc định = 1)
   t2?: number;  // Thời gian làm việc chế độ 2 (%)
   T2_ratio?: number; // T2/T ratio (mặc định = 0.65)
+}
+
+export interface InputConditions {
+  k0_type: number;
+  ka_type: number;
+  kdc_type: number;
+  kd_type: number;
+  kc_type: number;
+  kbt_type: number;
 }
 
 // Giới hạn validation

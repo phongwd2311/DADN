@@ -19,6 +19,7 @@ const InputScreen = ({ navigation }: any) => {
   const [force, setForce] = useState('');
   const [velocity, setVelocity] = useState('');
   const [diameter, setDiameter] = useState('');
+  const [lifespan, setLifespan] = useState('');
   const [t1, setT1] = useState('');
   const [T1, setTr1] = useState('');
   const [t2, setT2] = useState('');
@@ -26,18 +27,31 @@ const InputScreen = ({ navigation }: any) => {
   const [uh, setUh] = useState('12.5');
   const [tmmRatio, setTmmRatio] = useState('1.6');
   const [gearboxType, setGearboxType] = useState<GearboxType>('KHAI_TRIEN');
+  const [k0Type, setK0Type] = useState('');
+  const [kaType, setKaType] = useState('');
+  const [kdcType, setKdcType] = useState('');
+  const [kdType, setKdType] = useState('');
+  const [kcType, setKcType] = useState('');
+  const [kbtType, setKbtType] = useState('');
   const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState<{ force?: string; velocity?: string; diameter?: string; uh?: string; tmmRatio?: string }>({});
+  const [errors, setErrors] = useState<{ force?: string; velocity?: string; diameter?: string; lifespan?: string; uh?: string; tmmRatio?: string; k0Type?: string; kaType?: string; kdcType?: string; kdType?: string; kcType?: string; kbtType?: string }>({});
 
   const validate = () => {
     const newErrors: Record<string, string> = {};
     const fVal = Number(force);
     const vVal = Number(velocity);
     const dVal = Number(diameter);
+    const lVal = Number(lifespan);
     const t1Val = Number(t1);
     const t2Val = Number(t2);
     const uhVal = Number(uh);
     const tmmVal = Number(tmmRatio);
+    const k0Val = Number(k0Type);
+    const kaVal = Number(kaType);
+    const kdcVal = Number(kdcType);
+    const kdVal = Number(kdType);
+    const kcVal = Number(kcType);
+    const kbtVal = Number(kbtType);
 
     if (!force.trim()) newErrors.force = 'Yêu cầu nhập lực';
     else if (isNaN(fVal) || fVal <= 0 || fVal > 50000) newErrors.force = '0 < F ≤ 50,000 N';
@@ -48,6 +62,12 @@ const InputScreen = ({ navigation }: any) => {
     if (!diameter.trim()) newErrors.diameter = 'Yêu cầu nhập đường kính';
     else if (isNaN(dVal) || dVal <= 0 || dVal > 1000) newErrors.diameter = '0 < D ≤ 1000 mm';
 
+    if (lifespan.trim()) {
+      if (isNaN(lVal) || lVal <= 0 || lVal > 100000) {
+        newErrors.lifespan = '0 < L ≤ 100000 giờ';
+      }
+    }
+
     if (t1.trim() && (isNaN(t1Val) || t1Val < 0 || t1Val > 100)) newErrors.t1 = '0-100%';
     if (t2.trim() && (isNaN(t2Val) || t2Val < 0 || t2Val > 100)) newErrors.t2 = '0-100%';
     if (!uh.trim() || isNaN(uhVal) || uhVal <= 0) newErrors.uh = 'uh phải > 0';
@@ -56,6 +76,18 @@ const InputScreen = ({ navigation }: any) => {
     if (t1.trim() && t2.trim() && (t1Val + t2Val > 100)) {
        newErrors.t1 = 'Tổng % > 100';
        newErrors.t2 = 'Tổng % > 100';
+    }
+
+    const anyConditionProvided = [k0Type, kaType, kdcType, kdType, kcType, kbtType]
+      .some((value) => value.trim());
+
+    if (anyConditionProvided) {
+      if (!k0Type.trim() || !Number.isInteger(k0Val) || k0Val <= 0) newErrors.k0Type = 'k0 phải là số nguyên > 0';
+      if (!kaType.trim() || !Number.isInteger(kaVal) || kaVal <= 0) newErrors.kaType = 'ka phải là số nguyên > 0';
+      if (!kdcType.trim() || !Number.isInteger(kdcVal) || kdcVal <= 0) newErrors.kdcType = 'kdc phải là số nguyên > 0';
+      if (!kdType.trim() || !Number.isInteger(kdVal) || kdVal <= 0) newErrors.kdType = 'kd phải là số nguyên > 0';
+      if (!kcType.trim() || !Number.isInteger(kcVal) || kcVal <= 0) newErrors.kcType = 'kc phải là số nguyên > 0';
+      if (!kbtType.trim() || !Number.isInteger(kbtVal) || kbtVal <= 0) newErrors.kbtType = 'kbt phải là số nguyên > 0';
     }
 
     setErrors(newErrors);
@@ -86,10 +118,24 @@ const InputScreen = ({ navigation }: any) => {
         T2_ratio = T2Num / T1Num;
       }
 
+      const anyConditionProvided = [k0Type, kaType, kdcType, kdType, kcType, kbtType]
+        .some((value) => value.trim());
+      const conditions = anyConditionProvided
+        ? {
+            k0_type: Number(k0Type),
+            ka_type: Number(kaType),
+            kdc_type: Number(kdcType),
+            kd_type: Number(kdType),
+            kc_type: Number(kcType),
+            kbt_type: Number(kbtType),
+          }
+        : undefined;
+
       const result = await calculateApi.calculate({
         F: Number(force),
         v: Number(velocity),
         D: Number(diameter),
+        ...(lifespan.trim() && { L: Number(lifespan) }),
         t1: t1Num ?? 20,
         T1_ratio: T1_ratio ?? 1,
         t2: t2Num ?? 80,
@@ -97,6 +143,7 @@ const InputScreen = ({ navigation }: any) => {
         uh: Number(uh),
         gearbox_type: gearboxType,
         tmm_t1_ratio: Number(tmmRatio),
+        ...(conditions && { conditions }),
       });
 
       setLoading(false);
@@ -106,6 +153,7 @@ const InputScreen = ({ navigation }: any) => {
           F: Number(force),
           v: Number(velocity),
           D: Number(diameter),
+          ...(lifespan.trim() && { L: Number(lifespan) }),
           t1: t1Num ?? 20,
           T1_ratio: T1_ratio ?? 1,
           t2: t2Num ?? 80,
@@ -113,6 +161,7 @@ const InputScreen = ({ navigation }: any) => {
           uh: Number(uh),
           gearbox_type: gearboxType,
           tmm_t1_ratio: Number(tmmRatio),
+          ...(conditions && { conditions }),
         },
         strategy: 'cost',
       });
@@ -170,6 +219,16 @@ const InputScreen = ({ navigation }: any) => {
               placeholder="e.g. 320"
               keyboardType="numeric"
               error={errors.diameter}
+              style={{ paddingBottom: Spacing.sm }}
+            />
+
+            <CustomInput
+              label="Thời gian phục vụ L (giờ)"
+              value={lifespan}
+              onChangeText={setLifespan}
+              placeholder="e.g. 10000"
+              keyboardType="numeric"
+              error={errors.lifespan}
               style={{ paddingBottom: Spacing.sm }}
             />
 
@@ -238,6 +297,79 @@ const InputScreen = ({ navigation }: any) => {
                   PHAN_DOI
                 </Text>
               </TouchableOpacity>
+            </View>
+
+            <Text style={styles.sectionTitle}>Điều kiện làm việc (tuỳ chọn)</Text>
+            <View style={styles.row}>
+              <View style={styles.col}>
+                <CustomInput
+                  label="k0"
+                  value={k0Type}
+                  onChangeText={setK0Type}
+                  placeholder="e.g. 1"
+                  keyboardType="numeric"
+                  error={errors.k0Type}
+                />
+              </View>
+              <View style={styles.spacer} />
+              <View style={styles.col}>
+                <CustomInput
+                  label="ka"
+                  value={kaType}
+                  onChangeText={setKaType}
+                  placeholder="e.g. 1"
+                  keyboardType="numeric"
+                  error={errors.kaType}
+                />
+              </View>
+            </View>
+
+            <View style={styles.row}>
+              <View style={styles.col}>
+                <CustomInput
+                  label="kdc"
+                  value={kdcType}
+                  onChangeText={setKdcType}
+                  placeholder="e.g. 1"
+                  keyboardType="numeric"
+                  error={errors.kdcType}
+                />
+              </View>
+              <View style={styles.spacer} />
+              <View style={styles.col}>
+                <CustomInput
+                  label="kd"
+                  value={kdType}
+                  onChangeText={setKdType}
+                  placeholder="e.g. 1"
+                  keyboardType="numeric"
+                  error={errors.kdType}
+                />
+              </View>
+            </View>
+
+            <View style={styles.row}>
+              <View style={styles.col}>
+                <CustomInput
+                  label="kc"
+                  value={kcType}
+                  onChangeText={setKcType}
+                  placeholder="e.g. 1"
+                  keyboardType="numeric"
+                  error={errors.kcType}
+                />
+              </View>
+              <View style={styles.spacer} />
+              <View style={styles.col}>
+                <CustomInput
+                  label="kbt"
+                  value={kbtType}
+                  onChangeText={setKbtType}
+                  placeholder="e.g. 1"
+                  keyboardType="numeric"
+                  error={errors.kbtType}
+                />
+              </View>
             </View>
 
             <View style={styles.row}>

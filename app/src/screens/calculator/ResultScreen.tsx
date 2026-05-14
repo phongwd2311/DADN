@@ -63,6 +63,7 @@ const ResultScreen = ({ route, navigation }: any) => {
         F: Number(input.F),
         v: Number(input.v),
         D: Number(input.D),
+        ...(input.L != null && { L: Number(input.L) }),
         t1: Number(input.t1 ?? 20),
         T1_ratio: Number(input.T1_ratio ?? 1),
         t2: Number(input.t2 ?? 80),
@@ -70,6 +71,7 @@ const ResultScreen = ({ route, navigation }: any) => {
         uh: Number(input.uh ?? 12.5),
         gearbox_type: input.gearbox_type || 'KHAI_TRIEN',
         tmm_t1_ratio: Number(input.tmm_t1_ratio ?? 1.6),
+        ...(input.conditions && { conditions: input.conditions }),
       };
       
       const backendResult = {
