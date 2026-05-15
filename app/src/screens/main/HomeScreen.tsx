@@ -13,29 +13,6 @@ import { Colors, Typography, Spacing, BorderRadius, Shadows } from '../../utils/
 import GlassCard from '../../components/GlassCard';
 import { dashboardApi } from '../../api';
 
-interface FeatureCardProps {
-  icon: keyof typeof Ionicons.glyphMap;
-  title: string;
-  subtitle: string;
-  iconBgColor: string;
-  iconColor: string;
-  onPress: () => void;
-}
-
-const FeatureCard = ({ icon, title, subtitle, iconBgColor, iconColor, onPress }: FeatureCardProps) => (
-  <TouchableOpacity onPress={onPress} activeOpacity={0.8} style={styles.featureCard}>
-    <View style={[styles.featureCardInner, Shadows.card]}>
-      <View style={[styles.featureIconBg, { backgroundColor: iconBgColor }]}>
-        <Ionicons name={icon} size={22} color={iconColor} />
-      </View>
-      <View style={styles.featureTextWrapper}>
-        <Text style={styles.featureTitle}>{title}</Text>
-        <Text style={styles.featureSubtitle}>{subtitle}</Text>
-      </View>
-    </View>
-  </TouchableOpacity>
-);
-
 const HomeScreen = ({ navigation }: any) => {
   const [dashboard, setDashboard] = useState<any>(null);
 
@@ -93,42 +70,14 @@ const HomeScreen = ({ navigation }: any) => {
           </LinearGradient>
         </TouchableOpacity>
 
-        {/* Feature Cards */}
-        <Text style={styles.sectionTitle}>Features</Text>
-        <View style={styles.featureGrid}>
-          <FeatureCard
-            icon="calculator"
-            title="Calculations"
-            subtitle="Motor, Gear, Shaft"
-            iconBgColor={Colors.gradientCyan[0] + '20'} // Light transparent background
-            iconColor={Colors.gradientCyan[0]}
-            onPress={() => navigation.navigate('Calculate')}
-          />
-          <FeatureCard
-            icon="time"
-            title="History"
-            subtitle="Past results"
-            iconBgColor={Colors.gradientPurple[0] + '20'}
-            iconColor={Colors.gradientPurple[0]}
-            onPress={() => navigation.navigate('History')}
-          />
-          <FeatureCard
-            icon="document-text"
-            title="Tech Standards"
-            subtitle="View specs & data"
-            iconBgColor={Colors.success + '20'}
-            iconColor={Colors.success}
-            onPress={() => navigation.navigate('Standards')}
-          />
-          <FeatureCard
-            icon="hardware-chip"
-            title="Motors"
-            subtitle="Browse motor models"
-            iconBgColor={Colors.warning + '20'}
-            iconColor={Colors.warning}
-            onPress={() => navigation.navigate('Motors')}
-          />
-        </View>
+        <TouchableOpacity
+          onPress={() => navigation.navigate('Calculate')}
+          activeOpacity={0.85}
+          style={[styles.basicAction, Shadows.card]}
+        >
+          <Ionicons name="calculator-outline" size={18} color={Colors.primary} />
+          <Text style={styles.basicActionText}>Tinh toan</Text>
+        </TouchableOpacity>
 
         {/* Quick Stats */}
         <Text style={styles.sectionTitle}>Quick Stats</Text>
@@ -165,7 +114,7 @@ const HomeScreen = ({ navigation }: any) => {
                     {item.session_name}
                   </Text>
                   <Text style={styles.recentMeta}>
-                    {item.pct ? `${Number(item.pct).toFixed(2)} kW` : 'N/A'} â€¢ {item.motor_model ?? 'N/A'}
+                    {item.pct ? `${Number(item.pct).toFixed(2)} kW` : 'N/A'} | {item.motor_model ?? 'N/A'}
                   </Text>
                 </TouchableOpacity>
               ))}
@@ -252,46 +201,20 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
     color: Colors.textPrimary,
   },
-
-  // Feature Grid
-  featureGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    marginBottom: Spacing.xl,
-  },
-  featureCard: {
-    width: '48%',
-    marginBottom: Spacing.md,
-  },
-  featureCardInner: {
+  basicAction: {
     backgroundColor: Colors.surface,
     borderRadius: BorderRadius.md,
-    padding: Spacing.md,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.lg,
+    marginBottom: Spacing.lg,
     flexDirection: 'row',
     alignItems: 'center',
-    minHeight: 80,
+    gap: Spacing.sm,
   },
-  featureTextWrapper: {
-    flex: 1,
-  },
-  featureIconBg: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: Spacing.md,
-  },
-  featureTitle: {
-    color: Colors.textPrimary,
-    fontSize: 14,
+  basicActionText: {
+    ...Typography.body,
     fontWeight: '700',
-    marginBottom: 2,
-  },
-  featureSubtitle: {
-    color: Colors.textMuted,
-    fontSize: 11,
+    color: Colors.textPrimary,
   },
 
   // Stats
@@ -347,3 +270,4 @@ const styles = StyleSheet.create({
 });
 
 export default HomeScreen;
+

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -15,46 +15,23 @@ import { Colors, Typography, Spacing, BorderRadius, Shadows } from '../../utils/
 import CustomInput from '../../components/CustomInput';
 import GradientButton from '../../components/GradientButton';
 import { calculateApi, ChainLayoutType, ExternalDriveType, GearboxType } from '../../api/calculateApi';
-import { draftsApi, templatesApi } from '../../api';
 
 const InputScreen = ({ navigation }: any) => {
   const [force, setForce] = useState('');
   const [velocity, setVelocity] = useState('');
   const [diameter, setDiameter] = useState('');
-  const [serviceTime, setServiceTime] = useState('8760');
+  const [serviceTime, setServiceTime] = useState('');
   const [t1, setT1] = useState('');
   const [T1, setTr1] = useState('');
   const [t2, setT2] = useState('');
   const [T2, setTr2] = useState('');
-  const [uh, setUh] = useState('12.5');
-  const [tmmRatio, setTmmRatio] = useState('1.6');
+  const [uh, setUh] = useState('');
+  const [tmmRatio, setTmmRatio] = useState('');
   const [gearboxType, setGearboxType] = useState<GearboxType>('KHAI_TRIEN');
   const [externalDriveType, setExternalDriveType] = useState<ExternalDriveType>('CHAIN');
   const [chainLayout, setChainLayout] = useState<ChainLayoutType>('HORIZONTAL_OR_LT40');
   const [loading, setLoading] = useState(false);
-  const [templates, setTemplates] = useState<any[]>([]);
-  const [draftId, setDraftId] = useState<number | undefined>(undefined);
   const [errors, setErrors] = useState<{ force?: string; velocity?: string; diameter?: string; serviceTime?: string; uh?: string; tmmRatio?: string; t1?: string; t2?: string }>({});
-  const isHydratingRef = useRef(true);
-
-  const applyTemplateInput = (input: any) => {
-    if (!input || typeof input !== 'object') return;
-    setForce(String(input.F ?? ''));
-    setVelocity(String(input.v ?? ''));
-    setDiameter(String(input.D ?? ''));
-    setServiceTime(String(input.L ?? '8760'));
-    setT1(String(input.t1 ?? ''));
-    setT2(String(input.t2 ?? ''));
-    setUh(String(input.uh ?? '12.5'));
-    setTmmRatio(String(input.tmm_t1_ratio ?? '1.6'));
-    setGearboxType(input.gearbox_type === 'PHAN_DOI' ? 'PHAN_DOI' : 'KHAI_TRIEN');
-    const edt = ['CHAIN', 'BELT', 'GEAR', 'NONE'].includes(input.external_drive_type)
-      ? (input.external_drive_type as ExternalDriveType)
-      : 'CHAIN';
-    setExternalDriveType(edt);
-    const cl = input.chain_layout === 'STEEP_GT40' ? 'STEEP_GT40' : 'HORIZONTAL_OR_LT40';
-    setChainLayout(cl);
-  };
 
   const buildCalculationPayload = (overrides?: Partial<Record<string, unknown>>) => {
     const t1Num = t1 ? Number(t1) : undefined;
@@ -101,69 +78,6 @@ const InputScreen = ({ navigation }: any) => {
       ...(overrides ?? {}),
     };
   };
-
-  useEffect(() => {
-    const bootstrap = async () => {
-      try {
-        const [draftRes, templateRes] = await Promise.all([
-          draftsApi.getLatest(),
-          templatesApi.getAll(),
-        ]);
-
-        if (Array.isArray(templateRes?.templates)) {
-          setTemplates(templateRes.templates);
-        }
-
-        const latestDraft = draftRes?.draft;
-        if (latestDraft?.draft_id) {
-          setDraftId(Number(latestDraft.draft_id));
-        }
-
-        const hasAnyLocalInput = !!(force || velocity || diameter || serviceTime || t1 || t2 || uh || tmmRatio);
-        if (!hasAnyLocalInput && latestDraft?.input) {
-          applyTemplateInput(latestDraft.input);
-        }
-      } catch (error) {
-        console.log('Load draft/template failed:', error);
-      } finally {
-        isHydratingRef.current = false;
-      }
-    };
-
-    bootstrap();
-    // intentionally run once on mount
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useEffect(() => {
-    if (isHydratingRef.current) {
-      return;
-    }
-
-    const hasAnyInput = !!(force || velocity || diameter || serviceTime || t1 || t2 || T1 || T2 || uh || tmmRatio);
-    if (!hasAnyInput) {
-      return;
-    }
-
-    const timer = setTimeout(async () => {
-      try {
-        const payloadInput = buildCalculationPayload();
-        const res = await draftsApi.autosave({
-          draft_id: draftId,
-          draft_name: 'InputScreen Draft',
-          input: payloadInput,
-          result: null,
-        });
-        if (res?.draft_id) {
-          setDraftId(Number(res.draft_id));
-        }
-      } catch (error) {
-        console.log('Autosave draft failed:', error);
-      }
-    }, 1500);
-
-    return () => clearTimeout(timer);
-  }, [force, velocity, diameter, serviceTime, t1, T1, t2, T2, uh, tmmRatio, gearboxType, externalDriveType, chainLayout, draftId]);
 
   const validate = () => {
     const newErrors: Record<string, string> = {};
@@ -230,19 +144,6 @@ const InputScreen = ({ navigation }: any) => {
     }
   };
 
-  const handleSaveTemplate = async () => {
-    try {
-      const payload = buildCalculationPayload();
-      const templateName = `Template ${new Date().toLocaleString('vi-VN')}`;
-      await templatesApi.create(templateName, payload);
-      const refreshed = await templatesApi.getAll();
-      setTemplates(Array.isArray(refreshed?.templates) ? refreshed.templates : []);
-      Alert.alert('Thành công', 'Đã lưu template nhanh.');
-    } catch (error) {
-      Alert.alert('Lỗi', 'Không thể lưu template.');
-    }
-  };
-
   return (
     <SafeAreaView style={styles.safeArea}>
       <KeyboardAvoidingView
@@ -298,7 +199,7 @@ const InputScreen = ({ navigation }: any) => {
               label="Thoi gian phuc vu L (gio)"
               value={serviceTime}
               onChangeText={setServiceTime}
-              placeholder="e.g. 8760"
+              placeholder="e.g. 12000"
               keyboardType="numeric"
               error={errors.serviceTime}
               style={{ paddingBottom: Spacing.sm }}
@@ -308,26 +209,6 @@ const InputScreen = ({ navigation }: any) => {
             <Text style={styles.sectionTitle}>
               Chế độ tải thay đổi theo thời gian
             </Text>
-
-            <View style={styles.templateHeader}>
-              <Text style={styles.sectionTitle}>Template Library</Text>
-              <TouchableOpacity onPress={handleSaveTemplate}>
-                <Text style={styles.saveTemplateText}>LÆ°u template</Text>
-              </TouchableOpacity>
-            </View>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.templateRow}>
-              {templates.slice(0, 8).map((tpl: any) => (
-                <TouchableOpacity
-                  key={String(tpl.template_id)}
-                  style={styles.templateChip}
-                  onPress={() => applyTemplateInput(tpl.input)}
-                >
-                  <Text style={styles.templateChipText} numberOfLines={1}>
-                    {tpl.template_name}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
 
             <View style={styles.row}>
               <View style={styles.col}>
@@ -355,7 +236,7 @@ const InputScreen = ({ navigation }: any) => {
               label="Tỷ số truyền hộp giảm tốc uh"
               value={uh}
               onChangeText={setUh}
-              placeholder="e.g. 12.5"
+              placeholder="e.g. 10"
               keyboardType="numeric"
               error={errors.uh}
               style={{ paddingBottom: Spacing.sm }}
@@ -365,7 +246,7 @@ const InputScreen = ({ navigation }: any) => {
               label="Tỷ số quá tải yêu cầu Tmm/T1"
               value={tmmRatio}
               onChangeText={setTmmRatio}
-              placeholder="e.g. 1.6"
+              placeholder="e.g. 1.4"
               keyboardType="numeric"
               error={errors.tmmRatio}
               style={{ paddingBottom: Spacing.sm }}
@@ -541,35 +422,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: Spacing.sm,
     marginBottom: Spacing.md,
-  },
-  templateHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: Spacing.xs,
-  },
-  saveTemplateText: {
-    color: Colors.primary,
-    fontWeight: '700',
-    fontSize: 13,
-  },
-  templateRow: {
-    marginBottom: Spacing.md,
-  },
-  templateChip: {
-    backgroundColor: Colors.surfaceLight,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    borderRadius: BorderRadius.full,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    marginRight: Spacing.sm,
-    maxWidth: 180,
-  },
-  templateChipText: {
-    color: Colors.textSecondary,
-    fontSize: 12,
-    fontWeight: '600',
   },
   toggleButton: {
     flex: 1,

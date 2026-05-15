@@ -10,7 +10,6 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Typography, Spacing, BorderRadius, Shadows } from '../../utils/theme';
-
 import { AuthContext } from '../../context/AuthContext';
 
 const ProfileScreen = ({ navigation }: any) => {
@@ -18,19 +17,16 @@ const ProfileScreen = ({ navigation }: any) => {
 
   const handleLogout = async () => {
     await logout();
-    // AppNavigator will automatically handle the redirect to Auth Stack
   };
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        {/* Header */}
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Profile</Text>
           <Text style={styles.headerSubtitle}>Manage your account settings</Text>
         </View>
 
-        {/* Profile Info Card */}
         <View style={[styles.card, Shadows.card]}>
           <View style={styles.userInfoRow}>
             <LinearGradient
@@ -42,34 +38,12 @@ const ProfileScreen = ({ navigation }: any) => {
               <Ionicons name="person-outline" size={32} color="#fff" />
             </LinearGradient>
             <View style={styles.userInfoText}>
-              <Text style={styles.userName}>{user?.username || 'Khách'}</Text>
-              <Text style={styles.userEmail}>{user?.email || 'Chưa đăng nhập'}</Text>
+              <Text style={styles.userName}>{user?.username || 'Khach'}</Text>
+              <Text style={styles.userEmail}>{user?.email || 'Chua dang nhap'}</Text>
             </View>
-          </View>
-
-          <View style={styles.divider} />
-
-          <View style={styles.statRow}>
-            <Text style={styles.statLabel}>Total Calculations</Text>
-            <Text style={styles.statValue}>-</Text>
-          </View>
-          
-          <View style={styles.divider} />
-
-          <View style={styles.statRow}>
-            <Text style={styles.statLabel}>Saved Projects</Text>
-            <Text style={styles.statValue}>-</Text>
-          </View>
-          
-          <View style={styles.divider} />
-
-          <View style={styles.statRow}>
-            <Text style={styles.statLabel}>Member Since</Text>
-            <Text style={styles.statValue}>2024</Text>
           </View>
         </View>
 
-        {/* Settings Card */}
         <View style={[styles.card, Shadows.card]}>
           <Text style={styles.sectionTitle}>Settings</Text>
 
@@ -85,14 +59,10 @@ const ProfileScreen = ({ navigation }: any) => {
             <Text style={styles.menuItemText}>Help & Support</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity 
-            style={styles.menuItem}
-            onPress={handleLogout}
-          >
+          <TouchableOpacity style={styles.menuItem} onPress={handleLogout}>
             <Text style={styles.signOutText}>Sign Out</Text>
           </TouchableOpacity>
         </View>
-
       </ScrollView>
     </SafeAreaView>
   );
@@ -108,8 +78,6 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.xxl,
     paddingBottom: Spacing.xxxl,
   },
-  
-  // Header
   header: {
     marginBottom: Spacing.xl,
   },
@@ -123,20 +91,15 @@ const styles = StyleSheet.create({
     ...Typography.bodySmall,
     color: Colors.textSecondary,
   },
-
-  // Cards
   card: {
     backgroundColor: Colors.surface,
     borderRadius: BorderRadius.lg,
     padding: Spacing.xl,
     marginBottom: Spacing.xl,
   },
-
-  // User Info
   userInfoRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: Spacing.lg,
   },
   avatarGradient: {
     width: 64,
@@ -160,26 +123,6 @@ const styles = StyleSheet.create({
     ...Typography.bodySmall,
     color: Colors.textMuted,
   },
-
-  // Stats
-  statRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: Spacing.sm,
-  },
-  statLabel: {
-    color: Colors.textSecondary,
-    fontSize: 14,
-    fontWeight: '400',
-  },
-  statValue: {
-    color: '#1E293B',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-
-  // Settings Menu
   sectionTitle: {
     ...Typography.h3,
     color: '#1E293B',
@@ -198,13 +141,6 @@ const styles = StyleSheet.create({
     color: Colors.error || '#EF4444',
     fontSize: 15,
     fontWeight: '600',
-  },
-
-  // Divider
-  divider: {
-    height: 1,
-    backgroundColor: Colors.border,
-    marginVertical: Spacing.md,
   },
 });
 
