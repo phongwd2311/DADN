@@ -12,6 +12,9 @@ const motors_1 = __importDefault(require("./routes/motors"));
 const calculate_1 = __importDefault(require("./routes/calculate"));
 const standards_1 = __importDefault(require("./routes/standards"));
 const report_1 = __importDefault(require("./routes/report"));
+const dashboard_1 = __importDefault(require("./routes/dashboard"));
+const drafts_1 = __importDefault(require("./routes/drafts"));
+const templates_1 = __importDefault(require("./routes/templates"));
 const app = (0, express_1.default)();
 const PORT = process.env.PORT || 3000;
 // ==================== Middleware ====================
@@ -24,6 +27,9 @@ app.use("/api/motors", motors_1.default);
 app.use("/api/calculate", calculate_1.default);
 app.use("/api/standards", standards_1.default);
 app.use("/api/report", report_1.default);
+app.use("/api/dashboard", dashboard_1.default);
+app.use("/api/drafts", drafts_1.default);
+app.use("/api/templates", templates_1.default);
 // Health check
 app.get("/api/health", (_req, res) => {
     res.json({
@@ -51,6 +57,14 @@ app.listen(PORT, () => {
     console.log("  GET  /api/standards");
     console.log("  GET  /api/standards/:tableKey");
     console.log("  POST /api/report/preview");
+    console.log("  POST /api/report/pdf");
+    console.log("  POST /api/report/print");
+    console.log("  GET  /api/dashboard");
+    console.log("  GET  /api/drafts");
+    console.log("  GET  /api/drafts/latest");
+    console.log("  POST /api/drafts/autosave");
+    console.log("  GET  /api/templates");
+    console.log("  POST /api/templates");
     console.log("  GET  /api/health");
 });
 exports.default = app;

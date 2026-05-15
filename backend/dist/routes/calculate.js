@@ -8,6 +8,17 @@ const chainTables_1 = require("../constants/chainTables");
 const gearbox_1 = require("../constants/gearbox");
 const standards_1 = require("../constants/standards");
 const router = (0, express_1.Router)();
+const CONDITION_FACTOR_MAP = {
+    1: 1,
+    2: 1.1,
+    3: 1.25,
+    4: 1.4,
+};
+function mapConditionFactor(type, fallback) {
+    if (!type)
+        return fallback;
+    return CONDITION_FACTOR_MAP[type] ?? fallback;
+}
 function safeRound(value, digits = 4) {
     if (!Number.isFinite(value)) {
         return value;
@@ -17,18 +28,19 @@ function safeRound(value, digits = 4) {
 }
 function chooseMotor(motors, pct, nsb, tmmT1Ratio) {
     const ranked = motors
-        .filter((motor) => motor.rated_power != null && motor.rated_power >= pct)
+        .filter((motor) => {
+        if (motor.rated_power == null || motor.rated_power < pct)
+            return false;
+        if (motor.tk_tdn == null || motor.tk_tdn < tmmT1Ratio)
+            return false;
+        return true;
+    })
         .map((motor) => {
         const speed = motor.rated_speed ?? Number.POSITIVE_INFINITY;
         const speedDiff = Math.abs(speed - nsb);
-        const overloadOk = motor.tk_tdn != null ? motor.tk_tdn >= tmmT1Ratio : null;
-        const overloadRank = overloadOk === true ? 0 : overloadOk === null ? 1 : 2;
-        return { motor, speedDiff, overloadOk, overloadRank };
+        return { motor, speedDiff };
     })
         .sort((a, b) => {
-        if (a.overloadRank !== b.overloadRank) {
-            return a.overloadRank - b.overloadRank;
-        }
         if (a.speedDiff !== b.speedDiff) {
             return a.speedDiff - b.speedDiff;
         }
@@ -37,10 +49,7 @@ function chooseMotor(motors, pct, nsb, tmmT1Ratio) {
     if (ranked.length > 0) {
         return ranked[0].motor;
     }
-    const fallbackBySpeed = motors
-        .filter((motor) => motor.rated_speed != null)
-        .sort((a, b) => Math.abs(a.rated_speed - nsb) - Math.abs(b.rated_speed - nsb));
-    return fallbackBySpeed[0] ?? null;
+    return null;
 }
 function selectGearRatios(ratio, type) {
     const { u1Values, u2Values } = gearbox_1.GEARBOX_RATIO_OPTIONS[type];
@@ -84,7 +93,7 @@ router.post("/", async (req, res) => {
             });
             return;
         }
-        const { F, v, D, t1, t2, T1_ratio, T2_ratio, uh, gearbox_type, tmm_t1_ratio, external_drive_type, chain_layout, } = parsed.data;
+        const { F, v, D, t1, t2, T1_ratio, T2_ratio, uh, gearbox_type, tmm_t1_ratio, external_drive_type, chain_layout, conditions, } = parsed.data;
         const externalDriveType = external_drive_type ?? "CHAIN";
         const chainLayout = chain_layout ?? "HORIZONTAL_OR_LT40";
         const Plv = (F * v) / 1000;
@@ -106,7 +115,10 @@ router.post("/", async (req, res) => {
         });
         const motor = chooseMotor(allMotors, Pct, nsb, tmm_t1_ratio);
         if (!motor) {
-            res.status(400).json({ error: "Không có dữ liệu động cơ để lựa chọn" });
+            res.status(422).json({
+                error: "Không có động cơ thỏa điều kiện quá tải",
+                code: "motor_overload_requirement_not_met",
+            });
             return;
         }
         const ut = motor.rated_speed != null ? motor.rated_speed / nlv : null;
@@ -162,7 +174,11 @@ router.post("/", async (req, res) => {
             const z1 = chooseZ1ByRatio(ux);
             const z2 = Math.max(z1 + 1, Math.round(z1 * ux));
             const dynamicFactors = {
-                ...chainTables_1.CHAIN_USE_FACTORS,
+                k0: mapConditionFactor(conditions?.k0_type, chainTables_1.CHAIN_USE_FACTORS.k0),
+                ka: mapConditionFactor(conditions?.ka_type, chainTables_1.CHAIN_USE_FACTORS.ka),
+                kdc: mapConditionFactor(conditions?.kdc_type, chainTables_1.CHAIN_USE_FACTORS.kdc),
+                kd: mapConditionFactor(conditions?.kd_type, chainTables_1.CHAIN_USE_FACTORS.kd),
+                kc: mapConditionFactor(conditions?.kc_type, chainTables_1.CHAIN_USE_FACTORS.kc),
                 kf: chainLayout === "HORIZONTAL_OR_LT40" ? 6 : 1,
                 kx: chainLayout === "HORIZONTAL_OR_LT40" ? 1.15 : 1.05,
             };
@@ -191,7 +207,8 @@ router.post("/", async (req, res) => {
                 const df1 = d1 - 2 * r;
                 const df2 = d2 - 2 * r;
                 const v_chain = (z1 * p * n3) / 60000;
-                const kbt = (0, standards_1.getKbtByChainSpeed)(v_chain);
+                const kbtBySpeed = (0, standards_1.getKbtByChainSpeed)(v_chain);
+                const kbt = mapConditionFactor(conditions?.kbt_type, kbtBySpeed);
                 const K = dynamicFactors.k0 *
                     dynamicFactors.ka *
                     dynamicFactors.kdc *
@@ -214,6 +231,8 @@ router.post("/", async (req, res) => {
                 const F0 = 9.81 * dynamicFactors.kf * selectedChain.q * (a / 1000);
                 const s = selectedChain.Q / (dynamicFactors.kd * Ft + F0 + Fv);
                 const sMinData = chainTables_1.SAFETY_FACTOR_TABLE.find((item) => item.p === p) ?? { s_min: 8.5 };
+                // SR-08.6: Số lần va đập xích trong 1 giây
+                const impact_freq = (z1 * n3) / (15 * xc);
                 const Fvd = 13e-7 * n3 * Math.pow(p, 3);
                 const calcSigmaH = (kr) => {
                     const insideSqrt = (kr * (Ft * dynamicFactors.kd + Fvd) * chainTables_1.ELASTIC_MODULUS) / selectedChain.A;
@@ -247,6 +266,7 @@ router.post("/", async (req, res) => {
                     F0,
                     s,
                     s_min: sMinData.s_min,
+                    impact_freq,
                     passed,
                     tensile_passed: s >= sMinData.s_min,
                     sigmaH1,
@@ -256,6 +276,8 @@ router.post("/", async (req, res) => {
                     pitch_limit_ok: pitchLimitOk,
                     p_max: pMax,
                     kbt,
+                    kbt_by_speed: kbtBySpeed,
+                    condition_types: conditions ?? null,
                     iteration,
                 };
                 optimizationLog.push({

@@ -13,6 +13,27 @@ function Invoke-JsonPost {
   return Invoke-RestMethod -Method Post -Uri $Url -ContentType "application/json" -Body ($Body | ConvertTo-Json -Depth 30)
 }
 
+function Invoke-RawPost {
+  param(
+    [string]$Url,
+    [object]$Body
+  )
+
+  $params = @{
+    Method = "Post"
+    Uri = $Url
+    ContentType = "application/json"
+    Body = ($Body | ConvertTo-Json -Depth 30)
+  }
+
+  $iwr = Get-Command Invoke-WebRequest
+  if ($iwr.Parameters.ContainsKey("UseBasicParsing")) {
+    $params.UseBasicParsing = $true
+  }
+
+  return Invoke-WebRequest @params
+}
+
 $pass = 0
 $fail = 0
 
@@ -60,6 +81,22 @@ $reportValid = Invoke-JsonPost -Url "$BaseUrl/api/report/preview" -Body @{
   motor = $calcValid.motor
 }
 Assert-True ([bool]$reportValid.exportable) "SR-10 report preview is exportable when design is valid"
+
+$reportPdf = Invoke-RawPost -Url "$BaseUrl/api/report/pdf" -Body @{
+  input = $calcValid.input
+  result = $calcValid.result
+  motor = $calcValid.motor
+}
+$pdfType = "$($reportPdf.Headers['Content-Type'])"
+Assert-True ($reportPdf.StatusCode -eq 200 -and $pdfType -like "application/pdf*" -and $reportPdf.RawContentLength -gt 200) "SR-10 PDF export endpoint returns a PDF file"
+
+$reportPrint = Invoke-RawPost -Url "$BaseUrl/api/report/print" -Body @{
+  input = $calcValid.input
+  result = $calcValid.result
+  motor = $calcValid.motor
+}
+$printType = "$($reportPrint.Headers['Content-Type'])"
+Assert-True ($reportPrint.StatusCode -eq 200 -and $printType -like "text/html*") "SR-10 print endpoint returns print-ready HTML"
 
 $calcInvalidBody = @{
   F = 5000

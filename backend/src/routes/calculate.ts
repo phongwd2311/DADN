@@ -19,6 +19,18 @@ const router = Router();
 type ExternalDriveType = "CHAIN" | "BELT" | "GEAR" | "NONE";
 type ChainLayoutType = "HORIZONTAL_OR_LT40" | "STEEP_GT40";
 
+const CONDITION_FACTOR_MAP: Record<number, number> = {
+  1: 1,
+  2: 1.1,
+  3: 1.25,
+  4: 1.4,
+};
+
+function mapConditionFactor(type: number | undefined, fallback: number): number {
+  if (!type) return fallback;
+  return CONDITION_FACTOR_MAP[type] ?? fallback;
+}
+
 function safeRound(value: number, digits = 4): number {
   if (!Number.isFinite(value)) {
     return value;
@@ -127,6 +139,7 @@ router.post("/", async (req, res: Response): Promise<void> => {
       tmm_t1_ratio,
       external_drive_type,
       chain_layout,
+      conditions,
     } = parsed.data;
 
     const externalDriveType: ExternalDriveType = external_drive_type ?? "CHAIN";
@@ -229,7 +242,11 @@ router.post("/", async (req, res: Response): Promise<void> => {
       const z2 = Math.max(z1 + 1, Math.round(z1 * ux));
 
       const dynamicFactors = {
-        ...CHAIN_USE_FACTORS,
+        k0: mapConditionFactor(conditions?.k0_type, CHAIN_USE_FACTORS.k0),
+        ka: mapConditionFactor(conditions?.ka_type, CHAIN_USE_FACTORS.ka),
+        kdc: mapConditionFactor(conditions?.kdc_type, CHAIN_USE_FACTORS.kdc),
+        kd: mapConditionFactor(conditions?.kd_type, CHAIN_USE_FACTORS.kd),
+        kc: mapConditionFactor(conditions?.kc_type, CHAIN_USE_FACTORS.kc),
         kf: chainLayout === "HORIZONTAL_OR_LT40" ? 6 : 1,
         kx: chainLayout === "HORIZONTAL_OR_LT40" ? 1.15 : 1.05,
       };
@@ -266,7 +283,8 @@ router.post("/", async (req, res: Response): Promise<void> => {
         const df2 = d2 - 2 * r;
 
         const v_chain = (z1 * p * n3) / 60000;
-        const kbt = getKbtByChainSpeed(v_chain);
+        const kbtBySpeed = getKbtByChainSpeed(v_chain);
+        const kbt = mapConditionFactor(conditions?.kbt_type, kbtBySpeed);
         const K =
           dynamicFactors.k0 *
           dynamicFactors.ka *
@@ -346,6 +364,8 @@ router.post("/", async (req, res: Response): Promise<void> => {
           pitch_limit_ok: pitchLimitOk,
           p_max: pMax,
           kbt,
+          kbt_by_speed: kbtBySpeed,
+          condition_types: conditions ?? null,
           iteration,
         };
 

@@ -58,6 +58,8 @@ app.listen(PORT, () => {
   console.log("  GET  /api/standards");
   console.log("  GET  /api/standards/:tableKey");
   console.log("  POST /api/report/preview");
+  console.log("  POST /api/report/pdf");
+  console.log("  POST /api/report/print");
   console.log("  GET  /api/dashboard");
   console.log("  GET  /api/drafts");
   console.log("  GET  /api/drafts/latest");

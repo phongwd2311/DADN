@@ -21,6 +21,7 @@ const InputScreen = ({ navigation }: any) => {
   const [force, setForce] = useState('');
   const [velocity, setVelocity] = useState('');
   const [diameter, setDiameter] = useState('');
+  const [serviceTime, setServiceTime] = useState('8760');
   const [t1, setT1] = useState('');
   const [T1, setTr1] = useState('');
   const [t2, setT2] = useState('');
@@ -33,7 +34,7 @@ const InputScreen = ({ navigation }: any) => {
   const [loading, setLoading] = useState(false);
   const [templates, setTemplates] = useState<any[]>([]);
   const [draftId, setDraftId] = useState<number | undefined>(undefined);
-  const [errors, setErrors] = useState<{ force?: string; velocity?: string; diameter?: string; uh?: string; tmmRatio?: string; t1?: string; t2?: string }>({});
+  const [errors, setErrors] = useState<{ force?: string; velocity?: string; diameter?: string; serviceTime?: string; uh?: string; tmmRatio?: string; t1?: string; t2?: string }>({});
   const isHydratingRef = useRef(true);
 
   const applyTemplateInput = (input: any) => {
@@ -41,6 +42,7 @@ const InputScreen = ({ navigation }: any) => {
     setForce(String(input.F ?? ''));
     setVelocity(String(input.v ?? ''));
     setDiameter(String(input.D ?? ''));
+    setServiceTime(String(input.L ?? '8760'));
     setT1(String(input.t1 ?? ''));
     setT2(String(input.t2 ?? ''));
     setUh(String(input.uh ?? '12.5'));
@@ -72,6 +74,7 @@ const InputScreen = ({ navigation }: any) => {
       F: Number(force),
       v: Number(velocity),
       D: Number(diameter),
+      L: Number(serviceTime),
       t1: t1Num ?? 20,
       T1_ratio,
       t2: t2Num ?? 80,
@@ -81,6 +84,20 @@ const InputScreen = ({ navigation }: any) => {
       tmm_t1_ratio: Number(tmmRatio),
       external_drive_type: externalDriveType,
       chain_layout: externalDriveType === 'CHAIN' ? chainLayout : undefined,
+      conditions: {
+        k0_type: 1,
+        ka_type: 1,
+        kdc_type: 1,
+        kd_type: 1,
+        kc_type: 1,
+        kbt_type: 1,
+      },
+      units: {
+        force: 'N' as const,
+        speed: 'm/s' as const,
+        diameter: 'mm' as const,
+        service_time: 'h' as const,
+      },
       ...(overrides ?? {}),
     };
   };
@@ -102,7 +119,7 @@ const InputScreen = ({ navigation }: any) => {
           setDraftId(Number(latestDraft.draft_id));
         }
 
-        const hasAnyLocalInput = !!(force || velocity || diameter || t1 || t2 || uh || tmmRatio);
+        const hasAnyLocalInput = !!(force || velocity || diameter || serviceTime || t1 || t2 || uh || tmmRatio);
         if (!hasAnyLocalInput && latestDraft?.input) {
           applyTemplateInput(latestDraft.input);
         }
@@ -123,7 +140,7 @@ const InputScreen = ({ navigation }: any) => {
       return;
     }
 
-    const hasAnyInput = !!(force || velocity || diameter || t1 || t2 || T1 || T2 || uh || tmmRatio);
+    const hasAnyInput = !!(force || velocity || diameter || serviceTime || t1 || t2 || T1 || T2 || uh || tmmRatio);
     if (!hasAnyInput) {
       return;
     }
@@ -146,13 +163,14 @@ const InputScreen = ({ navigation }: any) => {
     }, 1500);
 
     return () => clearTimeout(timer);
-  }, [force, velocity, diameter, t1, T1, t2, T2, uh, tmmRatio, gearboxType, externalDriveType, chainLayout, draftId]);
+  }, [force, velocity, diameter, serviceTime, t1, T1, t2, T2, uh, tmmRatio, gearboxType, externalDriveType, chainLayout, draftId]);
 
   const validate = () => {
     const newErrors: Record<string, string> = {};
     const fVal = Number(force);
     const vVal = Number(velocity);
     const dVal = Number(diameter);
+    const lVal = Number(serviceTime);
     const t1Val = Number(t1);
     const t2Val = Number(t2);
     const uhVal = Number(uh);
@@ -166,6 +184,9 @@ const InputScreen = ({ navigation }: any) => {
 
     if (!diameter.trim()) newErrors.diameter = 'Yêu cầu nhập đường kính';
     else if (isNaN(dVal) || dVal <= 0 || dVal > 1000) newErrors.diameter = '0 < D ≤ 1000 mm';
+
+    if (!serviceTime.trim()) newErrors.serviceTime = 'Yeu cau nhap thoi gian phuc vu L';
+    else if (isNaN(lVal) || lVal <= 0) newErrors.serviceTime = 'L phai > 0';
 
     if (t1.trim() && (isNaN(t1Val) || t1Val < 0 || t1Val > 100)) newErrors.t1 = '0-100%';
     if (t2.trim() && (isNaN(t2Val) || t2Val < 0 || t2Val > 100)) newErrors.t2 = '0-100%';
@@ -270,6 +291,16 @@ const InputScreen = ({ navigation }: any) => {
               placeholder="e.g. 320"
               keyboardType="numeric"
               error={errors.diameter}
+              style={{ paddingBottom: Spacing.sm }}
+            />
+
+            <CustomInput
+              label="Thoi gian phuc vu L (gio)"
+              value={serviceTime}
+              onChangeText={setServiceTime}
+              placeholder="e.g. 8760"
+              keyboardType="numeric"
+              error={errors.serviceTime}
               style={{ paddingBottom: Spacing.sm }}
             />
 
